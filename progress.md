@@ -7,7 +7,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | --- | --- | --- |
 | 1. Bootstrap repo structure + ROADMAP.md + progress.md | ✅ | Base folders created and tracking docs added. |
 | 2. Extract contracts from source repos + unified model map | ✅ | Source file map + unified model map documented. |
-| 3. Write docs/ALL_IN_ONE_API.md | 🟡 | Pending. |
+| 3. Write docs/ALL_IN_ONE_API.md | ✅ | Complete unified all-in-one API spec. |
 | 4. Write docs/WEBSOCKET_EVENTS.md | 🟡 | Pending. |
 | 5. Generate schemas/ JSON Schema + validate | 🟡 | Pending. |
 | 6. Generate types/contracts.ts | 🟡 | Pending. |
@@ -34,4 +34,10 @@ Step 2:
 $ ls ndefender-api-contracts/docs
 CONTRACT_SOURCES.md
 UNIFIED_MODEL_MAP.md
+```
+
+Step 3:
+```
+$ rg -n \"Backend Aggregator API\" ndefender-api-contracts/docs/ALL_IN_ONE_API.md
+120:## 🌐 Backend Aggregator API (Primary)
 ```
