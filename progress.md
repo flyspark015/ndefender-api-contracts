@@ -13,7 +13,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | 6. Generate types/contracts.ts | ✅ | TypeScript contracts aligned to schemas. |
 | 7. Generate docs/OPENAPI.yaml + validate | ✅ | OpenAPI v3.0.3 generated and YAML parsed. |
 | 8. Add examples/ + postman/ | ✅ | curl + WS client examples and Postman collections added. |
-| 9. Add CI checks | 🟡 | Pending. |
+| 9. Add CI checks | ✅ | GitHub Actions + local validation scripts + TS typecheck. |
 | 10. Tag v1.0.0-api-contracts-green + release notes | 🟡 | Pending. |
 
 ## Verification Evidence
@@ -79,6 +79,18 @@ print("paths:", len(data.get("paths", {})))
 PY
 openapi: 3.0.3
 paths: 34
+```
+
+Step 9:
+```
+$ cd ndefender-api-contracts && . .venv/bin/activate && python3 ci/check_markdown_links.py && python3 ci/check_schemas.py && python3 ci/check_openapi.py
+markdown links ok: 9 files
+schemas ok: 10
+openapi ok
+
+$ cd ndefender-api-contracts && npm run typecheck
+> ndefender-api-contracts@1.0.0 typecheck
+> tsc -p tsconfig.json
 ```
 
 Step 8:
