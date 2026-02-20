@@ -1,0 +1,951 @@
+openapi: 3.0.3
+info:
+  title: N-Defender Unified APIs
+  version: 1.0.0
+  description: |
+    OpenAPI specification for N-Defender Backend Aggregator (primary),
+    System Controller, and Observability APIs. Some endpoints (WS) are
+    documented as notes due to protocol constraints.
+servers:
+  - url: http://127.0.0.1:8001/api/v1
+    description: Backend Aggregator (default)
+  - url: http://127.0.0.1:8000/api/v1
+    description: System Controller (default)
+  - url: http://127.0.0.1:9109/api/v1
+    description: Observability (default)
+security:
+  - ApiKeyAuth: []
+    RoleAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Backend Aggregator + System Controller + Observability
+    RoleAuth:
+      type: apiKey
+      in: header
+      name: X-Role
+      description: Backend Aggregator RBAC header (viewer/operator/admin)
+  schemas:
+    ErrorDetail:
+      type: object
+      properties:
+        detail:
+          type: string
+
+    StatusSnapshot:
+      $ref: ../schemas/StatusSnapshot.json
+
+    Contact:
+      $ref: ../schemas/Contact.json
+
+    EventEnvelope:
+      $ref: ../schemas/EventEnvelope.json
+
+    CommandResult:
+      type: object
+      required: [command, command_id, accepted, timestamp_ms]
+      additionalProperties: false
+      properties:
+        command: { type: string }
+        command_id: { type: string }
+        accepted: { type: boolean }
+        detail: { type: string, nullable: true }
+        timestamp_ms: { type: integer, minimum: 0 }
+
+    SystemStats:
+      type: object
+      additionalProperties: false
+      properties:
+        uptime_s: { type: integer }
+        cpu_temp_c: { type: number }
+        cpu_usage_percent: { type: number }
+        load_1m: { type: number }
+        load_5m: { type: number }
+        load_15m: { type: number }
+        ram_used_mb: { type: integer }
+        ram_total_mb: { type: integer }
+        disk_used_gb: { type: integer }
+        disk_total_gb: { type: integer }
+        throttled_flags: { type: integer }
+
+    UpsTelemetry:
+      $ref: ../schemas/UPS_Telemetry.json
+
+    ServiceStatus:
+      type: object
+      additionalProperties: false
+      required: [name, active_state, sub_state, restart_count]
+      properties:
+        name: { type: string }
+        active_state: { type: string }
+        sub_state: { type: string }
+        restart_count: { type: integer }
+
+    NetworkStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        connected: { type: boolean }
+        ssid: { type: string }
+        ip_v4: { type: string }
+        ip_v6: { type: string }
+
+    AudioStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        volume_percent: { type: integer }
+        muted: { type: boolean }
+
+    HealthResponse:
+      type: object
+      properties:
+        status: { type: string }
+        timestamp_ms: { type: integer }
+
+    SystemControllerHealth:
+      type: object
+      required: [ok, timestamp_ms, version]
+      properties:
+        ok: { type: boolean }
+        timestamp_ms: { type: integer }
+        version: { type: string }
+
+    SystemControllerSnapshot:
+      type: object
+      required: [timestamp_ms]
+      properties:
+        timestamp_ms: { type: integer }
+        system: { $ref: "#/components/schemas/SystemStats" }
+        ups: { $ref: "#/components/schemas/UpsTelemetry" }
+        services: { type: array, items: { $ref: "#/components/schemas/ServiceStatus" } }
+        network: { $ref: "#/components/schemas/NetworkStatus" }
+        audio: { $ref: "#/components/schemas/AudioStatus" }
+
+    ObservabilityStatus:
+      type: object
+      properties:
+        generated_ts: { type: integer }
+        overall_state: { type: string }
+        state_counts: { type: object, additionalProperties: { type: integer } }
+        subsystems:
+          type: array
+          items:
+            type: object
+            properties:
+              subsystem: { type: string }
+              state: { type: string }
+              last_update_age_ms: { type: integer, nullable: true }
+              last_error_ts: { type: integer, nullable: true }
+
+    ObservabilityHealthDetail:
+      type: object
+      properties:
+        generated_ts: { type: integer }
+        subsystems:
+          type: array
+          items:
+            type: object
+            properties:
+              subsystem: { type: string }
+              state: { type: string }
+              updated_ts: { type: integer, nullable: true }
+              last_error: { type: string, nullable: true }
+              last_error_ts: { type: integer, nullable: true }
+              last_response_ago_ms: { type: integer, nullable: true }
+              reasons: { type: array, items: { type: string } }
+              evidence: { type: object }
+        status: { type: string }
+
+paths:
+  /health:
+    get:
+      summary: Backend Aggregator health
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Health ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /status:
+    get:
+      summary: Backend Aggregator status snapshot
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Status snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusSnapshot" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /contacts:
+    get:
+      summary: Backend Aggregator contacts list
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contacts:
+                    type: array
+                    items: { $ref: "#/components/schemas/Contact" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system:
+    get:
+      summary: Backend Aggregator system view
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: System stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemStats" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /power:
+    get:
+      summary: Backend Aggregator UPS telemetry
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: UPS telemetry
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpsTelemetry" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /rf:
+    get:
+      summary: Backend Aggregator RF state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: RF ingest state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_event_type: { type: string }
+                  last_event: { type: object }
+                  last_timestamp_ms: { type: integer }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /video:
+    get:
+      summary: Backend Aggregator video state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Video state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  selected: { type: integer }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /services:
+    get:
+      summary: Backend Aggregator services
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Service list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ServiceStatus" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /network:
+    get:
+      summary: Backend Aggregator network state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Network status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetworkStatus" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /audio:
+    get:
+      summary: Backend Aggregator audio state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Audio status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AudioStatus" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /vrx/tune:
+    post:
+      summary: Tune VRX frequency
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    vrx_id: { type: integer }
+                    freq_hz: { type: integer }
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /scan/start:
+    post:
+      summary: Start VRX scan
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    dwell_ms: { type: integer }
+                    step_hz: { type: integer }
+                    start_hz: { type: integer }
+                    stop_hz: { type: integer }
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /scan/stop:
+    post:
+      summary: Stop VRX scan
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /video/select:
+    post:
+      summary: Select video channel
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    ch: { type: integer }
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "401":
+          description: Invalid API key
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: RBAC forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system/reboot:
+    post:
+      summary: Reboot system (dangerous)
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "400":
+          description: confirm required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: Unsafe operations disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system/shutdown:
+    post:
+      summary: Shutdown system (dangerous)
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "400":
+          description: confirm required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: Unsafe operations disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /ws:
+    get:
+      summary: Backend Aggregator WebSocket (documented in markdown)
+      tags: [Aggregator]
+      description: |
+        WebSocket fast path. See docs/WEBSOCKET_EVENTS.md for full envelope and events.
+      responses:
+        "101":
+          description: Switching Protocols
+
+  # -----------------------
+  # System Controller API
+  # -----------------------
+
+  /system-controller/health:
+    get:
+      summary: System Controller health
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Health ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemControllerHealth" }
+
+  /system-controller/status:
+    get:
+      summary: System Controller status
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemControllerSnapshot" }
+
+  /system-controller/system:
+    get:
+      summary: System Controller system stats
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: System stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemStats" }
+
+  /system-controller/ups:
+    get:
+      summary: System Controller UPS
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: UPS telemetry
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpsTelemetry" }
+
+  /system-controller/services:
+    get:
+      summary: System Controller services
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Services
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ServiceStatus" }
+
+  /system-controller/services/{name}/restart:
+    post:
+      summary: Restart a service
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command ACK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventEnvelope" }
+        "400":
+          description: confirm required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: cooldown active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system-controller/network:
+    get:
+      summary: System Controller network status
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Network
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetworkStatus" }
+
+  /system-controller/audio:
+    get:
+      summary: System Controller audio status
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Audio
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AudioStatus" }
+
+  /system-controller/system/reboot:
+    post:
+      summary: System Controller reboot
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command ACK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventEnvelope" }
+        "400":
+          description: confirm required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: unsafe operations disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: cooldown active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system-controller/system/shutdown:
+    post:
+      summary: System Controller shutdown
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command ACK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventEnvelope" }
+        "400":
+          description: confirm required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: unsafe operations disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: cooldown active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /system-controller/ws:
+    get:
+      summary: System Controller WebSocket (documented in markdown)
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      description: |
+        WebSocket updates. See docs/WEBSOCKET_EVENTS.md.
+      responses:
+        "101":
+          description: Switching Protocols
+
+  # -----------------------
+  # Observability API
+  # -----------------------
+
+  /observability/health:
+    get:
+      summary: Observability health
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Health ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+
+  /observability/health/detail:
+    get:
+      summary: Observability health detail
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Health detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObservabilityHealthDetail" }
+
+  /observability/status:
+    get:
+      summary: Observability status
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Status snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObservabilityStatus" }
+
+  /observability/version:
+    get:
+      summary: Observability version
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Version
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  git_sha: { type: string }
+
+  /observability/config:
+    get:
+      summary: Observability config (sanitized)
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Config
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /observability/diag/bundle:
+    post:
+      summary: Observability diagnostics bundle
+      tags: [Observability]
+      servers:
+        - url: http://127.0.0.1:9109/api/v1
+      responses:
+        "200":
+          description: Bundle result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path: { type: string }
+                  size_bytes: { type: integer }
+                  created_ts: { type: integer }
+        "403":
+          description: local only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "429":
+          description: cooldown active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "500":
+          description: bundle generation failure
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
