@@ -12,7 +12,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | 5. Generate schemas/ JSON Schema + validate | ✅ | Schemas generated and Draft2020-12 validation passed. |
 | 6. Generate types/contracts.ts | ✅ | TypeScript contracts aligned to schemas. |
 | 7. Generate docs/OPENAPI.yaml + validate | ✅ | OpenAPI v3.0.3 generated and YAML parsed. |
-| 8. Add examples/ + postman/ | 🟡 | Pending. |
+| 8. Add examples/ + postman/ | ✅ | curl + WS client examples and Postman collections added. |
 | 9. Add CI checks | 🟡 | Pending. |
 | 10. Tag v1.0.0-api-contracts-green + release notes | 🟡 | Pending. |
 
@@ -79,4 +79,16 @@ print("paths:", len(data.get("paths", {})))
 PY
 openapi: 3.0.3
 paths: 34
+```
+
+Step 8:
+```
+$ ls ndefender-api-contracts/examples
+README.md
+curl_command_reboot.sh
+curl_command_vrx_tune.sh
+curl_contacts.sh
+curl_health.sh
+curl_status.sh
+ws_client.py
 ```

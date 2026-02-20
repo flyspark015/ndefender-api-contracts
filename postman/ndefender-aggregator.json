@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "N-Defender Backend Aggregator",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "viewer"}
+        ],
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "viewer"}
+        ],
+        "url": "{{base_url}}/status"
+      }
+    },
+    {
+      "name": "Contacts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "viewer"}
+        ],
+        "url": "{{base_url}}/contacts"
+      }
+    },
+    {
+      "name": "VRX Tune",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "operator"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"payload\":{\"vrx_id\":1,\"freq_hz\":5740000000}}"
+        },
+        "url": "{{base_url}}/vrx/tune"
+      }
+    },
+    {
+      "name": "Scan Start",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "operator"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"payload\":{\"dwell_ms\":200,\"step_hz\":2000000,\"start_hz\":5645000000,\"stop_hz\":5865000000}}"
+        },
+        "url": "{{base_url}}/scan/start"
+      }
+    },
+    {
+      "name": "Scan Stop",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "operator"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\"payload\":{}}"},
+        "url": "{{base_url}}/scan/stop"
+      }
+    },
+    {
+      "name": "Video Select",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "operator"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\"payload\":{\"ch\":2}}"},
+        "url": "{{base_url}}/video/select"
+      }
+    },
+    {
+      "name": "System Reboot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "X-Role", "value": "admin"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "url": "{{base_url}}/system/reboot"
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:8001/api/v1"},
+    {"key": "api_key", "value": "CHANGE_ME"}
+  ]
+}

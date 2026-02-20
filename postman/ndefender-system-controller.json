@@ -1,0 +1,89 @@
+{
+  "info": {
+    "name": "N-Defender System Controller",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Status",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "url": "{{base_url}}/status"
+      }
+    },
+    {
+      "name": "System",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/system"
+      }
+    },
+    {
+      "name": "UPS",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/ups"
+      }
+    },
+    {
+      "name": "Services",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/services"
+      }
+    },
+    {
+      "name": "Service Restart",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "url": "{{base_url}}/services/ndefender-system-controller/restart"
+      }
+    },
+    {
+      "name": "Network",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/network"
+      }
+    },
+    {
+      "name": "Audio",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/audio"
+      }
+    },
+    {
+      "name": "System Reboot",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "url": "{{base_url}}/system/reboot"
+      }
+    },
+    {
+      "name": "System Shutdown",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "url": "{{base_url}}/system/shutdown"
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:8000/api/v1"},
+    {"key": "api_key", "value": ""}
+  ]
+}
