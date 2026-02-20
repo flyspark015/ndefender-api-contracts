@@ -11,7 +11,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | 4. Write docs/WEBSOCKET_EVENTS.md | ✅ | Complete WS event catalog + examples + reconnect behavior. |
 | 5. Generate schemas/ JSON Schema + validate | ✅ | Schemas generated and Draft2020-12 validation passed. |
 | 6. Generate types/contracts.ts | ✅ | TypeScript contracts aligned to schemas. |
-| 7. Generate docs/OPENAPI.yaml + validate | 🟡 | Pending. |
+| 7. Generate docs/OPENAPI.yaml + validate | ✅ | OpenAPI v3.0.3 generated and YAML parsed. |
 | 8. Add examples/ + postman/ | 🟡 | Pending. |
 | 9. Add CI checks | 🟡 | Pending. |
 | 10. Tag v1.0.0-api-contracts-green + release notes | 🟡 | Pending. |
@@ -66,4 +66,17 @@ Step 6:
 ```
 $ rg -n \"interface StatusSnapshot\" ndefender-api-contracts/types/contracts.ts
 260:export interface StatusSnapshot {
+```
+
+Step 7:
+```
+$ python3 - <<'PY'
+import yaml
+from pathlib import Path
+data = yaml.safe_load(Path("ndefender-api-contracts/docs/OPENAPI.yaml").read_text())
+print("openapi:", data.get("openapi"))
+print("paths:", len(data.get("paths", {})))
+PY
+openapi: 3.0.3
+paths: 34
 ```
