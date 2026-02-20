@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CONTACT_LOST.json",
+  "title": "RemoteID CONTACT_LOST Event",
+  "allOf": [
+    {"$ref": "./EventEnvelope.json"},
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "CONTACT_LOST"},
+        "source": {"const": "remoteid"},
+        "data": {"$ref": "#/$defs/contact_lost_event"}
+      },
+      "required": ["type", "timestamp_ms", "source", "data"]
+    }
+  ],
+  "$defs": {
+    "contact_lost_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "last_seen_ts"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"const": "REMOTE_ID"},
+        "last_seen_ts": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

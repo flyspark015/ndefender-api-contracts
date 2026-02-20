@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TELEMETRY_UPDATE.json",
+  "title": "RemoteID TELEMETRY_UPDATE Event",
+  "allOf": [
+    {"$ref": "./EventEnvelope.json"},
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "TELEMETRY_UPDATE"},
+        "source": {"const": "remoteid"},
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "last_ts", "contacts_active", "mode"],
+          "properties": {
+            "state": {"type": "string", "enum": ["offline", "ok", "degraded", "replay"]},
+            "last_ts": {"type": "integer", "minimum": 0},
+            "contacts_active": {"type": "integer", "minimum": 0},
+            "mode": {"type": "string", "enum": ["live", "replay"]}
+          }
+        }
+      },
+      "required": ["type", "timestamp_ms", "source", "data"]
+    }
+  ]
+}
