@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "REPLAY_STATE.json",
+  "title": "RemoteID REPLAY_STATE Event",
+  "allOf": [
+    {"$ref": "./EventEnvelope.json"},
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "REPLAY_STATE"},
+        "source": {"const": "remoteid"},
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "speed"],
+          "properties": {
+            "state": {"type": "string", "minLength": 1},
+            "speed": {"type": "number", "minimum": 0},
+            "position": {"type": "integer", "minimum": 0},
+            "total": {"type": "integer", "minimum": 0},
+            "ts": {"type": "integer", "minimum": 0}
+          }
+        }
+      },
+      "required": ["type", "timestamp_ms", "source", "data"]
+    }
+  ]
+}

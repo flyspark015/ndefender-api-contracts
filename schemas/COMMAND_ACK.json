@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "COMMAND_ACK.json",
+  "title": "COMMAND_ACK Event",
+  "allOf": [
+    {"$ref": "./EventEnvelope.json"},
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "COMMAND_ACK"},
+        "source": {"type": "string", "enum": ["esp32", "system"]},
+        "data": {
+          "oneOf": [
+            {"$ref": "#/$defs/esp32_ack"},
+            {"$ref": "#/$defs/system_ack"}
+          ]
+        }
+      },
+      "required": ["type", "timestamp_ms", "source", "data"]
+    }
+  ],
+  "$defs": {
+    "esp32_ack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ok"],
+      "properties": {
+        "id": {"type": "string"},
+        "ok": {"type": "boolean"},
+        "err": {"type": ["string", "null"]},
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cmd"],
+          "properties": {"cmd": {"type": "string"}}
+        }
+      }
+    },
+    "system_ack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "ok"],
+      "properties": {
+        "command": {"type": "string"},
+        "ok": {"type": "boolean"},
+        "reason": {"type": ["string", "null"]},
+        "name": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UPS_Telemetry.json",
+  "title": "UPS Telemetry",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pack_voltage_v": {"type": "number"},
+    "current_a": {"type": "number"},
+    "input_vbus_v": {"type": "number"},
+    "input_power_w": {"type": "number"},
+    "soc_percent": {"type": "integer"},
+    "time_to_empty_s": {"type": "integer"},
+    "time_to_full_s": {"type": "integer"},
+    "per_cell_v": {"type": "array", "items": {"type": "number"}},
+    "state": {
+      "type": "string",
+      "enum": ["IDLE", "CHARGING", "FAST_CHARGING", "DISCHARGING", "UNKNOWN"]
+    }
+  }
+}
