@@ -14,7 +14,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | 7. Generate docs/OPENAPI.yaml + validate | ✅ | OpenAPI v3.0.3 generated and YAML parsed. |
 | 8. Add examples/ + postman/ | ✅ | curl + WS client examples and Postman collections added. |
 | 9. Add CI checks | ✅ | GitHub Actions + local validation scripts + TS typecheck. |
-| 10. Tag v1.0.0-api-contracts-green + release notes | 🟡 | Release notes drafted; tag + GitHub release pending auth. |
+| 10. Tag v1.0.0-api-contracts-green + release notes | 🟡 | Release notes drafted; tag pushed; GitHub release pending auth. |
 
 ## Verification Evidence
 Step 1:
@@ -85,6 +85,9 @@ Step 10 (in progress):
 ```
 $ ls ndefender-api-contracts/docs | rg RELEASE_NOTES
 RELEASE_NOTES_v1.0.0-api-contracts-green.md
+
+$ git -C ndefender-api-contracts tag -l v1.0.0-api-contracts-green
+v1.0.0-api-contracts-green
 ```
 
 Step 9:
