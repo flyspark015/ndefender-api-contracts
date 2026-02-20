@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_URL=${BASE_URL:-"http://127.0.0.1:8001/api/v1"}
+API_KEY=${API_KEY:-""}
+ROLE=${ROLE:-"viewer"}
+
+if [[ -z "$API_KEY" ]]; then
+  echo "ERROR: API_KEY is required" >&2
+  exit 1
+fi
+
+curl -sS "$BASE_URL/health" \
+  -H "X-API-Key: $API_KEY" \
+  -H "X-Role: $ROLE" | jq .
