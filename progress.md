@@ -10,7 +10,7 @@ Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 | 3. Write docs/ALL_IN_ONE_API.md | ✅ | Complete unified all-in-one API spec. |
 | 4. Write docs/WEBSOCKET_EVENTS.md | ✅ | Complete WS event catalog + examples + reconnect behavior. |
 | 5. Generate schemas/ JSON Schema + validate | ✅ | Schemas generated and Draft2020-12 validation passed. |
-| 6. Generate types/contracts.ts | 🟡 | Pending. |
+| 6. Generate types/contracts.ts | ✅ | TypeScript contracts aligned to schemas. |
 | 7. Generate docs/OPENAPI.yaml + validate | 🟡 | Pending. |
 | 8. Add examples/ + postman/ | 🟡 | Pending. |
 | 9. Add CI checks | 🟡 | Pending. |
@@ -60,4 +60,10 @@ for path in sorted(root.glob(\"*.json\")):
 print(\"all schemas valid\")
 PY
 all schemas valid
+```
+
+Step 6:
+```
+$ rg -n \"interface StatusSnapshot\" ndefender-api-contracts/types/contracts.ts
+260:export interface StatusSnapshot {
 ```
