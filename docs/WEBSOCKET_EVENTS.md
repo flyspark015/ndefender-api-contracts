@@ -70,7 +70,7 @@ Notes:
 **Endpoint:** `WS /api/v1/ws`
 
 Auth:
-- No API key enforcement in code. Deploy behind network controls or proxy if required.
+- No authentication required in current deployment. Use network controls if needed.
 
 ### SYSTEM_UPDATE
 Full system snapshot.
@@ -224,7 +224,7 @@ RemoteID replay state event.
 **Endpoint:** `WS /api/v1/ws`
 
 Auth:
-- No API key enforcement.
+- No authentication required in current deployment.
 
 ### LOG_EVENT
 ```json
@@ -302,7 +302,7 @@ Auth:
 **Endpoint:** `WS /api/v1/events`
 
 Auth:
-- Enforces `X-API-Key` when `api.api_key` is set.
+- No authentication required in current deployment.
 
 Event types:
 - `RF_CONTACT_NEW`
@@ -370,4 +370,3 @@ Example:
 | `RF_CONTACT_NEW` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_UPDATE` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_LOST` | AntSDR Scan | `/api/v1/events` |
-

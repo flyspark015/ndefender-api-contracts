@@ -282,7 +282,7 @@ Source
 - `src/ndefender_observability/config.py`
 
 Fields
-- Sanitized config object. `auth.api_key` is masked as `***` if set.
+- Sanitized config object. `auth.api_key` is masked as `***` if set (auth currently disabled).
 
 ### Diagnostics Bundle
 Source
@@ -292,4 +292,3 @@ Fields
 - `path` string.
 - `size_bytes` integer.
 - `created_ts` integer.
-

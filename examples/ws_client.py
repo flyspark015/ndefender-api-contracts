@@ -28,16 +28,9 @@ def validate_envelope(msg: dict[str, Any]) -> None:
 async def main() -> None:
     parser = argparse.ArgumentParser(description="N-Defender WS client")
     parser.add_argument("--url", default="ws://127.0.0.1:8001/api/v1/ws")
-    parser.add_argument("--api-key", default="")
-    parser.add_argument("--role", default="viewer")
     args = parser.parse_args()
 
-    headers = {}
-    if args.api_key:
-        headers["X-API-Key"] = args.api_key
-        headers["X-Role"] = args.role
-
-    async with websockets.connect(args.url, extra_headers=headers) as ws:
+    async with websockets.connect(args.url) as ws:
         print(f"connected: {args.url}")
         while True:
             msg = await ws.recv()

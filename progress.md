@@ -1,5 +1,7 @@
 # Progress Tracker
 
+Purpose: record verifiable progress and validation evidence for this repo.
+
 Status legend: ✅ done, 🟡 in progress, ❌ blocked.
 
 ## Steps
@@ -112,4 +114,41 @@ curl_contacts.sh
 curl_health.sh
 curl_status.sh
 ws_client.py
+```
+
+## Auth Removal Alignment — ✅ GREEN
+What changed:
+- Removed all API key and RBAC requirements from docs and examples.
+- OpenAPI updated to remove auth/security schemes and 401/403 auth responses.
+- Postman collections and curl examples now unauthenticated.
+
+Files updated:
+- `README.md`
+- `docs/ALL_IN_ONE_API.md`
+- `docs/WEBSOCKET_EVENTS.md`
+- `docs/OPENAPI.yaml`
+- `docs/CONTRACT_SOURCES.md`
+- `docs/UNIFIED_MODEL_MAP.md`
+- `docs/RELEASE_NOTES_v1.0.0-api-contracts-green.md`
+- `examples/*.sh`, `examples/ws_client.py`, `examples/README.md`
+- `postman/*.json`
+- `ROADMAP.md`
+
+Verification:
+```
+$ cd ndefender-api-contracts && . .venv/bin/activate && python3 ci/check_markdown_links.py
+markdown links ok: 12 files
+
+$ cd ndefender-api-contracts && . .venv/bin/activate && python3 ci/check_schemas.py
+schemas ok: 10
+
+$ cd ndefender-api-contracts && . .venv/bin/activate && python3 ci/check_openapi.py
+openapi ok
+
+$ cd ndefender-api-contracts && npm ci
+added 1 package, and audited 2 packages in 1s
+
+$ cd ndefender-api-contracts && npm run typecheck
+> ndefender-api-contracts@1.0.0 typecheck
+> tsc -p tsconfig.json
 ```

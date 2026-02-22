@@ -1,5 +1,7 @@
 # Release Notes — v1.0.0-api-contracts-green
 
+Purpose: record the contents and validation results of the v1.0.0 contracts release.
+
 ## Summary
 This release establishes the N-Defender API Contracts repository as the single source of truth for REST + WebSocket APIs, schemas, examples, OpenAPI, and TypeScript types.
 
@@ -20,4 +22,3 @@ This release establishes the N-Defender API Contracts repository as the single s
 
 ## Notes
 - WebSocket endpoints are documented in `docs/WEBSOCKET_EVENTS.md` and referenced in OpenAPI as non-HTTP operations.
-

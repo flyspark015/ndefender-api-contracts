@@ -13,22 +13,7 @@ servers:
     description: System Controller (default)
   - url: http://127.0.0.1:9109/api/v1
     description: Observability (default)
-security:
-  - ApiKeyAuth: []
-    RoleAuth: []
-
 components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: Backend Aggregator + System Controller + Observability
-    RoleAuth:
-      type: apiKey
-      in: header
-      name: X-Role
-      description: Backend Aggregator RBAC header (viewer/operator/admin)
   schemas:
     ErrorDetail:
       type: object
@@ -172,17 +157,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthResponse" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /status:
     get:
       summary: Backend Aggregator status snapshot
@@ -193,17 +167,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StatusSnapshot" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /contacts:
     get:
       summary: Backend Aggregator contacts list
@@ -219,17 +182,6 @@ paths:
                   contacts:
                     type: array
                     items: { $ref: "#/components/schemas/Contact" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /system:
     get:
       summary: Backend Aggregator system view
@@ -240,17 +192,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/SystemStats" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /power:
     get:
       summary: Backend Aggregator UPS telemetry
@@ -261,17 +202,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UpsTelemetry" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /rf:
     get:
       summary: Backend Aggregator RF state
@@ -287,17 +217,6 @@ paths:
                   last_event_type: { type: string }
                   last_event: { type: object }
                   last_timestamp_ms: { type: integer }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /video:
     get:
       summary: Backend Aggregator video state
@@ -311,17 +230,6 @@ paths:
                 type: object
                 properties:
                   selected: { type: integer }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /services:
     get:
       summary: Backend Aggregator services
@@ -334,17 +242,6 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ServiceStatus" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /network:
     get:
       summary: Backend Aggregator network state
@@ -355,17 +252,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/NetworkStatus" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /audio:
     get:
       summary: Backend Aggregator audio state
@@ -376,17 +262,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AudioStatus" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-
   /vrx/tune:
     post:
       summary: Tune VRX frequency
@@ -410,16 +285,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommandResult" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
         "429":
           description: Rate limit exceeded
           content:
@@ -451,16 +316,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommandResult" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
         "429":
           description: Rate limit exceeded
           content:
@@ -486,16 +341,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommandResult" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
         "429":
           description: Rate limit exceeded
           content:
@@ -524,16 +369,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommandResult" }
-        "401":
-          description: Invalid API key
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
-        "403":
-          description: RBAC forbidden
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorDetail" }
         "429":
           description: Rate limit exceeded
           content:

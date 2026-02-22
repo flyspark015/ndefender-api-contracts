@@ -8,10 +8,7 @@
       "name": "Health",
       "request": {
         "method": "GET",
-        "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "viewer"}
-        ],
+        "header": [],
         "url": "{{base_url}}/health"
       }
     },
@@ -19,10 +16,7 @@
       "name": "Status",
       "request": {
         "method": "GET",
-        "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "viewer"}
-        ],
+        "header": [],
         "url": "{{base_url}}/status"
       }
     },
@@ -30,10 +24,7 @@
       "name": "Contacts",
       "request": {
         "method": "GET",
-        "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "viewer"}
-        ],
+        "header": [],
         "url": "{{base_url}}/contacts"
       }
     },
@@ -42,9 +33,10 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "operator"},
-          {"key": "Content-Type", "value": "application/json"}
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -58,9 +50,10 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "operator"},
-          {"key": "Content-Type", "value": "application/json"}
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -74,11 +67,15 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "operator"},
-          {"key": "Content-Type", "value": "application/json"}
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "body": {"mode": "raw", "raw": "{\"payload\":{}}"},
+        "body": {
+          "mode": "raw",
+          "raw": "{\"payload\":{}}"
+        },
         "url": "{{base_url}}/scan/stop"
       }
     },
@@ -87,11 +84,15 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "operator"},
-          {"key": "Content-Type", "value": "application/json"}
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "body": {"mode": "raw", "raw": "{\"payload\":{\"ch\":2}}"},
+        "body": {
+          "mode": "raw",
+          "raw": "{\"payload\":{\"ch\":2}}"
+        },
         "url": "{{base_url}}/video/select"
       }
     },
@@ -100,17 +101,23 @@
       "request": {
         "method": "POST",
         "header": [
-          {"key": "X-API-Key", "value": "{{api_key}}"},
-          {"key": "X-Role", "value": "admin"},
-          {"key": "Content-Type", "value": "application/json"}
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "body": {
+          "mode": "raw",
+          "raw": "{\"confirm\":true}"
+        },
         "url": "{{base_url}}/system/reboot"
       }
     }
   ],
   "variable": [
-    {"key": "base_url", "value": "http://127.0.0.1:8001/api/v1"},
-    {"key": "api_key", "value": "CHANGE_ME"}
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8001/api/v1"
+    }
   ]
 }

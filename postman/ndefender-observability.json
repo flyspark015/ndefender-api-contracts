@@ -8,7 +8,7 @@
       "name": "Health",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/health"
       }
     },
@@ -16,7 +16,7 @@
       "name": "Health Detail",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/health/detail"
       }
     },
@@ -24,7 +24,7 @@
       "name": "Status",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/status"
       }
     },
@@ -32,7 +32,7 @@
       "name": "Version",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/version"
       }
     },
@@ -40,7 +40,7 @@
       "name": "Config",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/config"
       }
     },
@@ -48,7 +48,7 @@
       "name": "Metrics",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/metrics"
       }
     },
@@ -56,13 +56,15 @@
       "name": "Diagnostics Bundle",
       "request": {
         "method": "POST",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/diag/bundle"
       }
     }
   ],
   "variable": [
-    {"key": "base_url", "value": "http://127.0.0.1:9109/api/v1"},
-    {"key": "api_key", "value": ""}
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:9109/api/v1"
+    }
   ]
 }

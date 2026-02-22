@@ -15,7 +15,7 @@
       "name": "Status",
       "request": {
         "method": "GET",
-        "header": [{"key": "X-API-Key", "value": "{{api_key}}"}],
+        "header": [],
         "url": "{{base_url}}/status"
       }
     },
@@ -44,8 +44,16 @@
       "name": "Service Restart",
       "request": {
         "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"confirm\":true}"
+        },
         "url": "{{base_url}}/services/ndefender-system-controller/restart"
       }
     },
@@ -67,8 +75,16 @@
       "name": "System Reboot",
       "request": {
         "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"confirm\":true}"
+        },
         "url": "{{base_url}}/system/reboot"
       }
     },
@@ -76,14 +92,24 @@
       "name": "System Shutdown",
       "request": {
         "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "body": {"mode": "raw", "raw": "{\"confirm\":true}"},
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"confirm\":true}"
+        },
         "url": "{{base_url}}/system/shutdown"
       }
     }
   ],
   "variable": [
-    {"key": "base_url", "value": "http://127.0.0.1:8000/api/v1"},
-    {"key": "api_key", "value": ""}
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api/v1"
+    }
   ]
 }

@@ -11,24 +11,12 @@ This document is the single, production-grade reference for **all REST + WebSock
 
 ---
 
-## 🔑 Auth, RBAC, and Security
+## 🔑 Auth and Security
 
 ### Current Deployment (No Auth Required)
-- Auth headers are optional and not required.
-- `X-API-Key` / `X-Role` are ignored if provided.
-- Perimeter controls (VPN, allowlists, reverse proxy) are recommended.
-
-### System Controller
-- No API key required in current deployment.
-
-### Observability
-- No API key required in current deployment.
-
-### AntSDR Scan (Local API)
-- No API key required in current deployment.
-
-### RemoteID Engine (Local API)
-- No API key enforcement.
+- Default mode: **no API key required** for any endpoint.
+- If future auth is reintroduced, it must be documented as optional/TBD here before use.
+- Recommended hardening: network-level controls (VPN, allowlists, reverse proxy, LAN-only).
 
 ---
 
@@ -68,7 +56,6 @@ Common errors:
 - `429` Rate limit exceeded (command endpoints)
 
 ### `GET /health`
-### `GET /health`
 **Auth:** None (no headers required).
 
 Response fields:
@@ -79,8 +66,6 @@ Example response:
 ```json
 {"status":"ok","timestamp_ms":1700000000000}
 ```
-
-Errors: `403`.
 
 ---
 
@@ -118,8 +103,6 @@ Example response:
   "replay": {}
 }
 ```
-
-Errors: `403`.
 
 ---
 
@@ -179,8 +162,6 @@ Example response:
   ]
 }
 ```
-
-Errors: `403`.
 
 ---
 
@@ -330,7 +311,7 @@ Example response:
 {"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `429`.
 
 ---
 
@@ -353,7 +334,7 @@ Example response:
 {"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `429`.
 
 ---
 
@@ -370,7 +351,7 @@ Example response:
 {"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `429`.
 
 ---
 
@@ -390,7 +371,7 @@ Example response:
 {"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `429`.
 
 ---
 
