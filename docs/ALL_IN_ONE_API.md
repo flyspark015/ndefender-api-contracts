@@ -13,29 +13,19 @@ This document is the single, production-grade reference for **all REST + WebSock
 
 ## 🔑 Auth, RBAC, and Security
 
-### Backend Aggregator
-- API key header: `X-API-Key` required unless `auth.api_key_required=false`.
-- RBAC header: `X-Role` enforced when `auth.rbac_enabled=true`.
-- If `X-Role` is missing, `viewer` is assumed.
-
-Default roles and permissions:
-
-| Role | Permissions |
-| --- | --- |
-| `viewer` | `read` |
-| `operator` | `read`, `device_control` |
-| `admin` | `read`, `device_control`, `system_control` |
+### Current Deployment (No Auth Required)
+- Auth headers are optional and not required.
+- `X-API-Key` / `X-Role` are ignored if provided.
+- Perimeter controls (VPN, allowlists, reverse proxy) are recommended.
 
 ### System Controller
-- API key header: `X-API-Key` required **only** when `NDEFENDER_API_KEY` is set.
-- `/api/v1/status` enforces API key when configured; other endpoints do not.
+- No API key required in current deployment.
 
 ### Observability
-- API key enforced if `auth.enabled=true`.
-- Accepts `X-API-Key` header or `api_key` query param.
+- No API key required in current deployment.
 
 ### AntSDR Scan (Local API)
-- API key enforced if `api.api_key` is set. Header: `X-API-Key`.
+- No API key required in current deployment.
 
 ### RemoteID Engine (Local API)
 - No API key enforcement.
@@ -72,20 +62,14 @@ Default roles and permissions:
 **Base URL:** `/api/v1`
 
 Common headers:
-
-| Header | Required | Notes |
-| --- | --- | --- |
-| `X-API-Key` | Yes (unless `auth.api_key_required=false`) | API key auth |
-| `X-Role` | Yes (when RBAC enabled) | `viewer|operator|admin` |
+- None required in current deployment.
 
 Common errors:
-- `401` Invalid API key
-- `403` RBAC role invalid or insufficient permissions
 - `429` Rate limit exceeded (command endpoints)
 
 ### `GET /health`
 ### `GET /health`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `status` string
@@ -96,12 +80,12 @@ Example response:
 {"status":"ok","timestamp_ms":1700000000000}
 ```
 
-Errors: `401`, `403`.
+Errors: `403`.
 
 ---
 
 ### `GET /status`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `timestamp_ms` integer
@@ -135,12 +119,12 @@ Example response:
 }
 ```
 
-Errors: `401`, `403`.
+Errors: `403`.
 
 ---
 
 ### `GET /contacts`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `contacts` array of unified contact objects
@@ -196,12 +180,12 @@ Example response:
 }
 ```
 
-Errors: `401`, `403`.
+Errors: `403`.
 
 ---
 
 ### `GET /system`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields (System Controller `SystemStats`):
 - `uptime_s` integer
@@ -224,7 +208,7 @@ Example response:
 ---
 
 ### `GET /power`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields (UPS telemetry):
 - `pack_voltage_v` number
@@ -245,7 +229,7 @@ Example response:
 ---
 
 ### `GET /rf`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `last_event_type` string
@@ -260,7 +244,7 @@ Example response:
 ---
 
 ### `GET /video`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `selected` integer
@@ -273,7 +257,7 @@ Example response:
 ---
 
 ### `GET /services`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response is an array of objects with fields:
 - `name` string
@@ -289,7 +273,7 @@ Example response:
 ---
 
 ### `GET /network`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `connected` boolean
@@ -305,7 +289,7 @@ Example response:
 ---
 
 ### `GET /audio`
-**Auth:** `X-API-Key`, `X-Role: viewer`.
+**Auth:** None (no headers required).
 
 Response fields:
 - `volume_percent` integer
@@ -330,7 +314,7 @@ All command endpoints return **CommandResult**:
 ```
 
 #### `POST /vrx/tune`
-**Auth:** `X-API-Key`, `X-Role: operator`.
+**Auth:** None (no headers required).
 
 Payload fields:
 - `vrx_id` integer (1‑3)
@@ -346,12 +330,12 @@ Example response:
 {"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `401`, `403`, `429`.
+Errors: `403`, `429`.
 
 ---
 
 #### `POST /scan/start`
-**Auth:** `X-API-Key`, `X-Role: operator`.
+**Auth:** None (no headers required).
 
 Payload fields:
 - `dwell_ms` integer
@@ -369,12 +353,12 @@ Example response:
 {"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `401`, `403`, `429`.
+Errors: `403`, `429`.
 
 ---
 
 #### `POST /scan/stop`
-**Auth:** `X-API-Key`, `X-Role: operator`.
+**Auth:** None (no headers required).
 
 Example request:
 ```json
@@ -386,12 +370,12 @@ Example response:
 {"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `401`, `403`, `429`.
+Errors: `403`, `429`.
 
 ---
 
 #### `POST /video/select`
-**Auth:** `X-API-Key`, `X-Role: operator`.
+**Auth:** None (no headers required).
 
 Payload fields:
 - `ch` integer (1‑3)
@@ -406,12 +390,12 @@ Example response:
 {"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `401`, `403`, `429`.
+Errors: `403`, `429`.
 
 ---
 
 #### `POST /system/reboot`
-**Auth:** `X-API-Key`, `X-Role: admin`.
+**Auth:** None (no headers required).
 
 Requirements:
 - `confirm=true`
@@ -486,14 +470,10 @@ Event types (full catalog in `docs/WEBSOCKET_EVENTS.md`):
 **Base URL:** `/api/v1`
 
 Common headers:
-
-| Header | Required | Notes |
-| --- | --- | --- |
-| `X-API-Key` | Only when configured | Enforced on `/status` |
+- None required in current deployment.
 
 Common errors:
 - `400` Confirm required for reboot/shutdown/restart
-- `401` Invalid API key (status only)
 - `403` Unsafe operations disabled
 - `429` Cooldown active
 
@@ -511,7 +491,7 @@ Example response:
 ---
 
 ### `GET /status`
-**Auth:** `X-API-Key` when configured.
+**Auth:** None (no headers required).
 
 Response fields:
 - `timestamp_ms` integer
@@ -526,7 +506,6 @@ Example response:
 {"timestamp_ms":1700000000000,"system":{"cpu_temp_c":45.2},"ups":{"soc_percent":78,"state":"DISCHARGING"},"services":[],"network":{},"audio":{}}
 ```
 
-Errors: `401` if API key invalid.
 
 ---
 
@@ -669,13 +648,9 @@ Event types:
 **Base URL:** `/api/v1`
 
 Common headers:
-
-| Header | Required | Notes |
-| --- | --- | --- |
-| `X-API-Key` | Only when `auth.enabled=true` | Can also use `api_key` query param |
+- None required in current deployment.
 
 Common errors:
-- `401` Unauthorized
 - `429` Rate limit exceeded
 
 ### `GET /health`
@@ -714,7 +689,7 @@ Response:
 ```
 
 ### `GET /config`
-Response: sanitized config object with `auth.api_key` masked as `***` when set.
+Response: sanitized config object.
 
 Example response:
 ```json
@@ -740,7 +715,7 @@ Response:
 ```
 
 Cooldown: **60s**.
-Errors: `401`, `403`, `429`, `500`.
+Errors: `403`, `429`, `500`.
 
 ---
 
@@ -748,13 +723,9 @@ Errors: `401`, `403`, `429`, `500`.
 **Base URL:** `/api/v1`
 
 Common headers:
-
-| Header | Required | Notes |
-| --- | --- | --- |
-| `X-API-Key` | Only when `api.api_key` is set | Enforced on all endpoints |
+- None required in current deployment.
 
 Common errors:
-- `401` Invalid API key
 - `404` Not found
 - `409` Conflict
 - `429` Too many clients (WebSocket)
@@ -845,7 +816,6 @@ Response:
 ```
 
 ### `WS /events`
-- Enforces `X-API-Key` if set.
 - Enforces `api.max_clients` limit; returns `429` if exceeded.
 
 Envelope:
@@ -905,23 +875,22 @@ Suggested state merge rules:
 
 Health:
 ```bash
-curl -H "X-API-Key: <key>" -H "X-Role: viewer" http://127.0.0.1:8001/api/v1/health
+curl http://127.0.0.1:8001/api/v1/health
 ```
 
 Status:
 ```bash
-curl -H "X-API-Key: <key>" -H "X-Role: viewer" http://127.0.0.1:8001/api/v1/status
+curl http://127.0.0.1:8001/api/v1/status
 ```
 
 Contacts:
 ```bash
-curl -H "X-API-Key: <key>" -H "X-Role: viewer" http://127.0.0.1:8001/api/v1/contacts
+curl http://127.0.0.1:8001/api/v1/contacts
 ```
 
 Command:
 ```bash
 curl -X POST http://127.0.0.1:8001/api/v1/vrx/tune \
-  -H "X-API-Key: <key>" -H "X-Role: operator" \
   -H "Content-Type: application/json" \
   -d '{"payload":{"vrx_id":1,"freq_hz":5740000000}}'
 ```
