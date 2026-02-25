@@ -9,15 +9,17 @@
     "timestamp_ms": {"type": "integer", "minimum": 0},
     "system": {"$ref": "#/$defs/system_stats"},
     "power": {"$ref": "./UPS_Telemetry.json"},
-    "rf": {"$ref": "#/$defs/ingest_state"},
-    "remote_id": {"$ref": "#/$defs/ingest_state"},
+    "rf": {"$ref": "#/$defs/rf_state"},
+    "remote_id": {"$ref": "#/$defs/remote_id_state"},
     "vrx": {"$ref": "#/$defs/vrx_state"},
+    "fpv": {"$ref": "#/$defs/fpv_state"},
     "video": {"$ref": "#/$defs/video_state"},
     "services": {"type": "array", "items": {"$ref": "#/$defs/service_status"}},
     "network": {"$ref": "#/$defs/network_status"},
     "audio": {"$ref": "#/$defs/audio_status"},
     "contacts": {"type": "array", "items": {"$ref": "./Contact.json"}},
-    "replay": {"$ref": "#/$defs/replay_state"}
+    "replay": {"$ref": "#/$defs/replay_state"},
+    "overall_ok": {"type": "boolean"}
   },
   "$defs": {
     "system_stats": {
@@ -34,7 +36,8 @@
         "ram_total_mb": {"type": "integer"},
         "disk_used_gb": {"type": "integer"},
         "disk_total_gb": {"type": "integer"},
-        "throttled_flags": {"type": "integer"}
+        "throttled_flags": {"type": "integer"},
+        "status": {"type": "string"}
       }
     },
     "service_status": {
@@ -55,7 +58,8 @@
         "connected": {"type": "boolean"},
         "ssid": {"type": "string"},
         "ip_v4": {"type": "string"},
-        "ip_v6": {"type": "string"}
+        "ip_v6": {"type": "string"},
+        "status": {"type": "string"}
       }
     },
     "audio_status": {
@@ -63,16 +67,34 @@
       "additionalProperties": false,
       "properties": {
         "volume_percent": {"type": "integer"},
-        "muted": {"type": "boolean"}
+        "muted": {"type": "boolean"},
+        "status": {"type": "string"}
       }
     },
-    "ingest_state": {
+    "rf_state": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "last_event_type": {"type": "string"},
         "last_event": {"type": "object"},
-        "last_timestamp_ms": {"type": "integer", "minimum": 0}
+        "last_timestamp_ms": {"type": "integer", "minimum": 0},
+        "scan_active": {"type": "boolean"},
+        "status": {"type": "string"},
+        "last_error": {"type": "string"}
+      }
+    },
+    "remote_id_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "last_event_type": {"type": "string"},
+        "last_event": {"type": "object"},
+        "last_timestamp_ms": {"type": "integer", "minimum": 0},
+        "state": {"type": "string"},
+        "mode": {"type": "string"},
+        "capture_active": {"type": "boolean"},
+        "last_error": {"type": "string"},
+        "last_ts": {"type": "integer", "minimum": 0}
       }
     },
     "vrx_state": {
@@ -83,6 +105,17 @@
         "vrx": {"type": "array", "items": {"$ref": "#/$defs/vrx_item"}},
         "led": {"$ref": "#/$defs/led_state"},
         "sys": {"$ref": "#/$defs/vrx_sys"}
+      }
+    },
+    "fpv_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selected": {"type": "integer"},
+        "locked_channels": {"type": "array", "items": {"type": "integer"}},
+        "rssi_raw": {"type": "integer"},
+        "scan_state": {"type": "string"},
+        "freq_hz": {"type": "number"}
       }
     },
     "vrx_item": {
@@ -116,7 +149,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "selected": {"type": "integer"}
+        "selected": {"type": "integer"},
+        "status": {"type": "string"}
       }
     },
     "replay_state": {

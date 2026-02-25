@@ -112,6 +112,7 @@ export interface ContactBase {
   type: string;
   source: string;
   last_seen_ts: number;
+  last_seen_uptime_ms?: number;
   severity: Severity;
 }
 
@@ -179,6 +180,7 @@ export interface UpsTelemetry {
   time_to_full_s?: number;
   per_cell_v?: number[];
   state?: "IDLE" | "CHARGING" | "FAST_CHARGING" | "DISCHARGING" | "UNKNOWN";
+  status?: string;
 }
 
 // -----------------------------
@@ -197,6 +199,7 @@ export interface SystemStats {
   disk_used_gb?: number;
   disk_total_gb?: number;
   throttled_flags?: number;
+  status?: string;
 }
 
 export interface ServiceStatus {
@@ -211,17 +214,33 @@ export interface NetworkStatus {
   ssid?: string;
   ip_v4?: string;
   ip_v6?: string;
+  status?: string;
 }
 
 export interface AudioStatus {
   volume_percent?: number;
   muted?: boolean;
+  status?: string;
 }
 
-export interface IngestState {
+export interface RfState {
   last_event_type?: string;
   last_event?: JsonObject;
   last_timestamp_ms?: number;
+  scan_active?: boolean;
+  status?: string;
+  last_error?: string;
+}
+
+export interface RemoteIdState {
+  last_event_type?: string;
+  last_event?: JsonObject;
+  last_timestamp_ms?: number;
+  state?: string;
+  mode?: string;
+  capture_active?: boolean;
+  last_error?: string;
+  last_ts?: number;
 }
 
 export interface VrxItem {
@@ -248,8 +267,17 @@ export interface VrxState {
   sys?: VrxSys;
 }
 
+export interface FpvState {
+  selected?: number;
+  locked_channels?: number[];
+  rssi_raw?: number;
+  scan_state?: string;
+  freq_hz?: number;
+}
+
 export interface VideoState {
   selected?: number;
+  status?: string;
 }
 
 export interface ReplayStateSnapshot {
@@ -261,14 +289,15 @@ export interface StatusSnapshot {
   timestamp_ms: number;
   system?: SystemStats;
   power?: UpsTelemetry;
-  rf?: IngestState;
-  remote_id?: IngestState;
+  rf?: RfState;
+  remote_id?: RemoteIdState;
   vrx?: VrxState;
+  fpv?: FpvState;
   video?: VideoState;
   services?: ServiceStatus[];
   network?: NetworkStatus;
   audio?: AudioStatus;
   contacts?: Contact[];
   replay?: ReplayStateSnapshot;
+  overall_ok?: boolean;
 }
-

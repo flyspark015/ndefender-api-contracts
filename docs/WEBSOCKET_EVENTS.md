@@ -348,6 +348,7 @@ Example:
 
 | Event Type | Source | WS Endpoint |
 | --- | --- | --- |
+| `HEARTBEAT` | Backend Aggregator | `/api/v1/ws` |
 | `SYSTEM_UPDATE` | Backend Aggregator | `/api/v1/ws` |
 | `COMMAND_ACK` | Backend Aggregator | `/api/v1/ws` |
 | `ESP32_TELEMETRY` | Backend Aggregator | `/api/v1/ws` |
@@ -370,4 +371,3 @@ Example:
 | `RF_CONTACT_NEW` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_UPDATE` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_LOST` | AntSDR Scan | `/api/v1/events` |
-

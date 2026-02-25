@@ -94,28 +94,32 @@ Response fields:
 - `rf` object
 - `remote_id` object
 - `vrx` object
+- `fpv` object
 - `video` object
 - `services` array
 - `network` object
 - `audio` object
 - `contacts` array
 - `replay` object
+- `overall_ok` boolean
 
 Example response:
 ```json
 {
   "timestamp_ms": 1700000000000,
-  "system": {},
-  "power": {},
-  "rf": {},
-  "remote_id": {},
-  "vrx": {},
-  "video": {},
+  "system": {"status": "ok"},
+  "power": {"status": "ok"},
+  "rf": {"status": "offline", "last_error": "antsdr_unreachable", "scan_active": false},
+  "remote_id": {"state": "degraded", "capture_active": true, "last_error": "no_odid_frames"},
+  "vrx": {"selected": 1, "vrx": []},
+  "fpv": {"selected": 1, "freq_hz": 5740000000, "rssi_raw": 120},
+  "video": {"selected": 1, "status": "ok"},
   "services": [],
   "network": {},
   "audio": {},
   "contacts": [],
-  "replay": {}
+  "replay": {"active": false, "source": "none"},
+  "overall_ok": false
 }
 ```
 
@@ -134,6 +138,7 @@ Unified contact fields (base):
 - `type` string (`REMOTE_ID|RF|FPV`)
 - `source` string (`remoteid|antsdr|esp32`)
 - `last_seen_ts` integer
+- `last_seen_uptime_ms` integer (optional; uptime-based timestamp when provided by device)
 - `severity` string (`critical|high|medium|low|unknown`)
 
 RemoteID contact fields:
@@ -449,6 +454,7 @@ Envelope fields:
 - `data` object
 
 On connect, the server immediately sends **SYSTEM_UPDATE** containing the full snapshot.
+The server also emits **HEARTBEAT** events periodically to keep clients live.
 
 Example envelope:
 ```json
@@ -456,6 +462,7 @@ Example envelope:
 ```
 
 Event types (full catalog in `docs/WEBSOCKET_EVENTS.md`):
+- `HEARTBEAT`
 - `SYSTEM_UPDATE`
 - `COMMAND_ACK`
 - `ESP32_TELEMETRY`

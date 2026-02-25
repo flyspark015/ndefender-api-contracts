@@ -50,14 +50,19 @@ Fields
 - `system` object. Source: System Controller `/api/v1/status` → `system`.
 - `power` object. Source: System Controller `/api/v1/status` → `ups`.
 - `rf` object. Source: AntSDR JSONL tailer state (`last_event_type`, `last_event`, `last_timestamp_ms`).
+  - `rf.status` / `rf.last_error` clarify offline/degraded reasons.
 - `remote_id` object. Source: RemoteID JSONL tailer state (`last_event_type`, `last_event`, `last_timestamp_ms`).
+  - `remote_id.capture_active` indicates capture running even if no frames decoded.
+  - `remote_id.last_error` clarifies capture/decoding status.
 - `vrx` object. Source: ESP32 telemetry.
+- `fpv` object. Derived from selected VRX entry for UI stability.
 - `video` object. Source: ESP32 telemetry.
 - `services` array. Source: System Controller `/api/v1/status` → `services`.
 - `network` object. Source: System Controller `/api/v1/status` → `network`.
 - `audio` object. Source: System Controller `/api/v1/status` → `audio`.
 - `contacts` array. Source: ContactStore merge of RemoteID + RF + FPV contacts.
 - `replay` object. Source: RemoteID replay state tracking.
+- `overall_ok` boolean. False if any subsystem is degraded/offline.
 
 ### StatusSnapshot (System Controller REST)
 Source
@@ -79,6 +84,7 @@ Base fields (all contacts)
 - `type` string. One of `REMOTE_ID`, `RF`, `FPV`.
 - `source` string. One of `remoteid`, `antsdr`, `esp32`.
 - `last_seen_ts` integer. Epoch ms.
+- `last_seen_uptime_ms` integer (optional). Uptime-based timestamp when source reports uptime.
 - `severity` string. `critical|high|medium|low|unknown`.
 
 RemoteID contact fields
@@ -292,4 +298,3 @@ Fields
 - `path` string.
 - `size_bytes` integer.
 - `created_ts` integer.
-
