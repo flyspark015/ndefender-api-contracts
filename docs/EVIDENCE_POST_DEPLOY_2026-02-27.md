@@ -814,8 +814,8 @@ origin	git@github.com:flyspark015/ndefender-api-contracts.git (push)
 05c7c7d
 05c7c7d docs: add wifi/bluetooth disable endpoints
 == ndefender-backend-aggregator
-origin	https://<REDACTED>@github.com/flyspark015/ndefender-backend-aggregator.git (fetch)
-origin	https://<REDACTED>@github.com/flyspark015/ndefender-backend-aggregator.git (push)
+origin	https://github.com/flyspark015/ndefender-backend-aggregator.git (fetch)
+origin	https://github.com/flyspark015/ndefender-backend-aggregator.git (push)
 ## main...origin/main
 f5a21c7
 f5a21c7 feat(network): add wifi/bluetooth disable proxies
