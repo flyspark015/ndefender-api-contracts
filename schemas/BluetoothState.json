@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "BluetoothState.json",
+  "title": "Bluetooth State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "enabled": {"type": "boolean"},
+    "scanning": {"type": "boolean"},
+    "paired_count": {"type": "integer", "minimum": 0},
+    "connected_devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "addr": {"type": "string"},
+          "name": {"type": "string"},
+          "rssi_dbm": {"type": "integer"}
+        }
+      }
+    },
+    "last_update_ms": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

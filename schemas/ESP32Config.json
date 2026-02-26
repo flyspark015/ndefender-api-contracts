@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ESP32Config.json",
+  "title": "ESP32 Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timestamp_ms", "config"],
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "schema_version": {"type": "string"},
+    "config": {"type": "object"}
+  }
+}

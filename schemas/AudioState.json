@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AudioState.json",
+  "title": "Audio State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "status": {"type": "string", "enum": ["ok", "degraded", "offline"]},
+    "volume_percent": {"type": "integer", "minimum": 0, "maximum": 100},
+    "muted": {"type": "boolean"},
+    "last_error": {"type": "string"}
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AntSDRGainState.json",
+  "title": "AntSDR Gain State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "mode": {"type": "string", "enum": ["manual", "auto"]},
+    "gain_db": {"type": "number"},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_db": {"type": "number"},
+        "max_db": {"type": "number"}
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "BluetoothDeviceList.json",
+  "title": "Bluetooth Device List",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "addr": {"type": "string"},
+          "name": {"type": "string"},
+          "rssi_dbm": {"type": "integer"},
+          "paired": {"type": "boolean"},
+          "connected": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

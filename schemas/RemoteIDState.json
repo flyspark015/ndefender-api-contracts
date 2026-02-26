@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RemoteIDState.json",
+  "title": "RemoteID State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "state": {"type": "string", "enum": ["ok", "degraded", "offline", "replay"]},
+    "mode": {"type": "string", "enum": ["live", "replay", "off"]},
+    "capture_active": {"type": "boolean"},
+    "contacts_active": {"type": "integer", "minimum": 0},
+    "last_update_ms": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

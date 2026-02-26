@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SystemStats.json",
+  "title": "System Stats",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "status": {"type": "string", "enum": ["ok", "degraded", "offline"]},
+    "uptime_s": {"type": "integer", "minimum": 0},
+    "version": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "app": {"type": "string"},
+        "git_sha": {"type": "string"},
+        "build_ts": {"type": "integer", "minimum": 0}
+      }
+    },
+    "cpu": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "temp_c": {"type": "number"},
+        "load1": {"type": "number"},
+        "load5": {"type": "number"},
+        "load15": {"type": "number"},
+        "usage_percent": {"type": "number"}
+      }
+    },
+    "ram": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_mb": {"type": "integer"},
+        "used_mb": {"type": "integer"},
+        "free_mb": {"type": "integer"}
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "total_gb": {"type": "number"},
+            "used_gb": {"type": "number"},
+            "free_gb": {"type": "number"}
+          }
+        },
+        "logs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "total_gb": {"type": "number"},
+            "used_gb": {"type": "number"},
+            "free_gb": {"type": "number"}
+          }
+        }
+      }
+    },
+    "last_error": {"type": "string"},
+
+    "cpu_temp_c": {"type": "number"},
+    "cpu_usage_percent": {"type": "number"},
+    "load_1m": {"type": "number"},
+    "load_5m": {"type": "number"},
+    "load_15m": {"type": "number"},
+    "ram_used_mb": {"type": "integer"},
+    "ram_total_mb": {"type": "integer"},
+    "disk_used_gb": {"type": "integer"},
+    "disk_total_gb": {"type": "integer"},
+    "throttled_flags": {"type": "integer"}
+  }
+}

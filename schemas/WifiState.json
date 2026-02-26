@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WifiState.json",
+  "title": "Wi-Fi State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "enabled": {"type": "boolean"},
+    "connected": {"type": "boolean"},
+    "ssid": {"type": "string"},
+    "bssid": {"type": "string"},
+    "ip": {"type": "string"},
+    "rssi_dbm": {"type": "integer"},
+    "link_quality": {"type": "integer"},
+    "last_update_ms": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

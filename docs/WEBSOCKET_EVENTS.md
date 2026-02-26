@@ -33,15 +33,17 @@ Used by `/api/v1/events` in AntSDR Scan (local API).
 ```json
 {
   "type": "RF_CONTACT_UPDATE",
-  "timestamp": 1700000000000,
+  "timestamp_ms": 1700000000000,
   "source": "antsdr",
   "data": {}
 }
 ```
 
 Notes:
-- AntSDR events use `timestamp` (not `timestamp_ms`).
-- Backend Aggregator and System Controller use `timestamp_ms`.
+- All WS envelopes use `timestamp_ms`.
+
+Liveness:
+- Clients should receive **>=3 messages within 10 seconds**. Aggregator uses `HEARTBEAT` to satisfy this.
 
 ---
 
@@ -81,17 +83,22 @@ Full system snapshot.
   "source": "aggregator",
   "data": {
     "timestamp_ms": 1700000000000,
-    "system": {},
-    "power": {},
-    "rf": {},
-    "remote_id": {},
-    "vrx": {},
-    "video": {},
+    "overall_ok": false,
+    "system": {"status":"ok","uptime_s":1234},
+    "power": {"status":"ok","soc_percent":78,"state":"DISCHARGING"},
+    "rf": {"status":"offline","scan_active":false,"last_error":"antsdr_unreachable"},
+    "remote_id": {"state":"DEGRADED","mode":"live","capture_active":true,"last_error":"no_odid_frames"},
+    "vrx": {"selected":1,"vrx":[]},
+    "fpv": {"selected":1,"scan_state":"idle"},
+    "video": {"selected":1,"status":"ok"},
     "services": [],
-    "network": {},
-    "audio": {},
+    "network": {"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"MyWiFi"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}},
+    "gps": {"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"},
+    "esp32": {"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000},
+    "antsdr": {"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"},
+    "audio": {"timestamp_ms":1700000000000,"status":"ok","volume_percent":60,"muted":false},
     "contacts": [],
-    "replay": {}
+    "replay": {"active":false,"source":"none"}
   }
 }
 ```
@@ -104,6 +111,17 @@ Emitted by ESP32 serial ingest and System Controller commands.
   "timestamp_ms": 1700000000000,
   "source": "esp32",
   "data": {"id":"123","ok":true,"err":null,"data":{"cmd":"SET_VRX_FREQ"}}
+}
+```
+
+### HEARTBEAT
+Lightweight liveness event (>=3 messages within 10 seconds).
+```json
+{
+  "type": "HEARTBEAT",
+  "timestamp_ms": 1700000000000,
+  "source": "aggregator",
+  "data": {"timestamp_ms": 1700000000000}
 }
 ```
 
@@ -313,7 +331,7 @@ Example:
 ```json
 {
   "type": "RF_CONTACT_NEW",
-  "timestamp": 1700000000000,
+  "timestamp_ms": 1700000000000,
   "source": "antsdr",
   "data": {
     "id": "rf:2500000000",
@@ -349,6 +367,7 @@ Example:
 | Event Type | Source | WS Endpoint |
 | --- | --- | --- |
 | `SYSTEM_UPDATE` | Backend Aggregator | `/api/v1/ws` |
+| `HEARTBEAT` | Backend Aggregator | `/api/v1/ws` |
 | `COMMAND_ACK` | Backend Aggregator | `/api/v1/ws` |
 | `ESP32_TELEMETRY` | Backend Aggregator | `/api/v1/ws` |
 | `LOG_EVENT` | Backend Aggregator | `/api/v1/ws` |
@@ -370,4 +389,3 @@ Example:
 | `RF_CONTACT_NEW` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_UPDATE` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_LOST` | AntSDR Scan | `/api/v1/events` |
-

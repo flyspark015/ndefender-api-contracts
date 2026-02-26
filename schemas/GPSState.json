@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "GPSState.json",
+  "title": "GPS State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "fix": {"type": "string", "enum": ["NO_FIX", "FIX_2D", "FIX_3D"]},
+    "satellites": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "in_view": {"type": "integer", "minimum": 0},
+        "in_use": {"type": "integer", "minimum": 0}
+      }
+    },
+    "hdop": {"type": "number"},
+    "vdop": {"type": "number"},
+    "pdop": {"type": "number"},
+    "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+    "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+    "altitude_m": {"type": "number"},
+    "speed_m_s": {"type": "number", "minimum": 0},
+    "heading_deg": {"type": "number", "minimum": 0, "maximum": 360},
+    "last_update_ms": {"type": "integer", "minimum": 0},
+    "age_ms": {"type": "integer", "minimum": 0},
+    "source": {"type": "string"},
+    "last_error": {"type": "string"}
+  }
+}
