@@ -74,7 +74,22 @@ def check_required_status_fields(status: Dict[str, Any]) -> List[str]:
     errors: List[str] = []
     if "timestamp_ms" not in status:
         errors.append("/status missing timestamp_ms")
-    for key in ["system", "power", "rf", "remote_id", "vrx", "video", "services", "network", "audio", "contacts", "replay"]:
+    for key in [
+        "system",
+        "power",
+        "rf",
+        "remote_id",
+        "gps",
+        "esp32",
+        "antsdr",
+        "vrx",
+        "video",
+        "services",
+        "network",
+        "audio",
+        "contacts",
+        "replay",
+    ]:
         if key in status and status[key] == {}:
             errors.append(f"/status {key} is empty object")
     return errors
