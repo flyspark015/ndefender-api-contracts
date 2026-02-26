@@ -5,6 +5,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "status": {"type": "string", "enum": ["ok", "degraded", "offline"]},
     "pack_voltage_v": {"type": "number"},
     "current_a": {"type": "number"},
     "input_vbus_v": {"type": "number"},
@@ -16,6 +18,7 @@
     "state": {
       "type": "string",
       "enum": ["IDLE", "CHARGING", "FAST_CHARGING", "DISCHARGING", "UNKNOWN"]
-    }
+    },
+    "last_error": {"type": "string"}
   }
 }

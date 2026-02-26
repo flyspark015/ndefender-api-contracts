@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ESP32State.json",
+  "title": "ESP32 State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "connected": {"type": "boolean"},
+    "last_seen_ms": {"type": "integer", "minimum": 0},
+    "rtt_ms": {"type": "integer", "minimum": 0},
+    "fw_version": {"type": "string"},
+    "heartbeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ok": {"type": "boolean"},
+        "interval_ms": {"type": "integer", "minimum": 0},
+        "last_heartbeat_ms": {"type": "integer", "minimum": 0}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buttons": {"type": "boolean"},
+        "leds": {"type": "boolean"},
+        "buzzer": {"type": "boolean"},
+        "vrx": {"type": "boolean"},
+        "video_switch": {"type": "boolean"},
+        "config": {"type": "boolean"}
+      }
+    },
+    "last_error": {"type": "string"}
+  }
+}

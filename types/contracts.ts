@@ -161,6 +161,7 @@ export interface FpvContact extends ContactBase {
   freq_hz: number;
   rssi_raw: number;
   selected: number;
+  last_seen_uptime_ms?: number;
 }
 
 export type Contact = RemoteIdContact | RfContact | FpvContact;
@@ -170,6 +171,8 @@ export type Contact = RemoteIdContact | RfContact | FpvContact;
 // -----------------------------
 
 export interface UpsTelemetry {
+  timestamp_ms?: number;
+  status?: "ok" | "degraded" | "offline";
   pack_voltage_v?: number;
   current_a?: number;
   input_vbus_v?: number;
@@ -179,6 +182,7 @@ export interface UpsTelemetry {
   time_to_full_s?: number;
   per_cell_v?: number[];
   state?: "IDLE" | "CHARGING" | "FAST_CHARGING" | "DISCHARGING" | "UNKNOWN";
+  last_error?: string;
 }
 
 // -----------------------------
@@ -186,7 +190,31 @@ export interface UpsTelemetry {
 // -----------------------------
 
 export interface SystemStats {
+  timestamp_ms?: number;
+  status?: "ok" | "degraded" | "offline";
   uptime_s?: number;
+  version?: {
+    app?: string;
+    git_sha?: string;
+    build_ts?: number;
+  };
+  cpu?: {
+    temp_c?: number;
+    load1?: number;
+    load5?: number;
+    load15?: number;
+    usage_percent?: number;
+  };
+  ram?: {
+    total_mb?: number;
+    used_mb?: number;
+    free_mb?: number;
+  };
+  storage?: {
+    root?: { total_gb?: number; used_gb?: number; free_gb?: number };
+    logs?: { total_gb?: number; used_gb?: number; free_gb?: number };
+  };
+  last_error?: string;
   cpu_temp_c?: number;
   cpu_usage_percent?: number;
   load_1m?: number;
@@ -204,6 +232,9 @@ export interface ServiceStatus {
   active_state: string;
   sub_state: string;
   restart_count: number;
+  uptime_s?: number;
+  last_restart_ms?: number;
+  last_error?: string;
 }
 
 export interface NetworkStatus {
@@ -211,14 +242,172 @@ export interface NetworkStatus {
   ssid?: string;
   ip_v4?: string;
   ip_v6?: string;
+  wifi?: WifiState;
+  bluetooth?: BluetoothState;
 }
 
 export interface AudioStatus {
+  timestamp_ms?: number;
+  status?: "ok" | "degraded" | "offline";
   volume_percent?: number;
   muted?: boolean;
+  last_error?: string;
+}
+
+export interface WifiState {
+  timestamp_ms?: number;
+  enabled?: boolean;
+  connected?: boolean;
+  ssid?: string;
+  bssid?: string;
+  ip?: string;
+  rssi_dbm?: number;
+  link_quality?: number;
+  last_update_ms?: number;
+  last_error?: string;
+}
+
+export interface WifiScanResult {
+  timestamp_ms?: number;
+  networks?: Array<{
+    ssid?: string;
+    bssid?: string;
+    security?: string;
+    signal_dbm?: number;
+    channel?: number;
+    frequency_mhz?: number;
+    known?: boolean;
+  }>;
+}
+
+export interface BluetoothState {
+  timestamp_ms?: number;
+  enabled?: boolean;
+  scanning?: boolean;
+  paired_count?: number;
+  connected_devices?: Array<{ addr: string; name?: string; rssi_dbm?: number }>;
+  last_update_ms?: number;
+  last_error?: string;
+}
+
+export interface BluetoothDeviceList {
+  timestamp_ms?: number;
+  devices?: Array<{ addr: string; name?: string; rssi_dbm?: number; paired?: boolean; connected?: boolean }>;
+}
+
+export interface GPSState {
+  timestamp_ms?: number;
+  fix?: "NO_FIX" | "FIX_2D" | "FIX_3D";
+  satellites?: { in_view?: number; in_use?: number };
+  hdop?: number;
+  vdop?: number;
+  pdop?: number;
+  latitude?: number;
+  longitude?: number;
+  altitude_m?: number;
+  speed_m_s?: number;
+  heading_deg?: number;
+  last_update_ms?: number;
+  age_ms?: number;
+  source?: string;
+  last_error?: string;
+}
+
+export interface ESP32State {
+  timestamp_ms?: number;
+  connected?: boolean;
+  last_seen_ms?: number;
+  rtt_ms?: number;
+  fw_version?: string;
+  heartbeat?: { ok?: boolean; interval_ms?: number; last_heartbeat_ms?: number };
+  capabilities?: {
+    buttons?: boolean;
+    leds?: boolean;
+    buzzer?: boolean;
+    vrx?: boolean;
+    video_switch?: boolean;
+    config?: boolean;
+  };
+  last_error?: string;
+}
+
+export interface ESP32Config {
+  timestamp_ms: number;
+  schema_version?: string;
+  config: JsonObject;
+}
+
+export interface AntSDRDeviceState {
+  timestamp_ms?: number;
+  connected?: boolean;
+  uri?: string;
+  temperature_c?: number;
+  last_error?: string;
+}
+
+export interface AntSDRSweepState {
+  timestamp_ms?: number;
+  running?: boolean;
+  active_plan?: string;
+  plans?: Array<{ name: string; start_hz: number; end_hz: number; step_hz: number }>;
+  last_update_ms?: number;
+  last_error?: string;
+}
+
+export interface AntSDRGainState {
+  timestamp_ms?: number;
+  mode?: "manual" | "auto";
+  gain_db?: number;
+  limits?: { min_db?: number; max_db?: number };
+}
+
+export interface AntSDRStats {
+  timestamp_ms?: number;
+  frames_processed?: number;
+  events_emitted?: number;
+  last_event_timestamp_ms?: number;
+  noise_floor_db?: number;
+  peaks?: number;
+  last_error?: string;
+}
+
+export interface RemoteIDState {
+  timestamp_ms?: number;
+  state?: "ok" | "degraded" | "offline" | "replay";
+  mode?: "live" | "replay" | "off";
+  capture_active?: boolean;
+  contacts_active?: number;
+  last_update_ms?: number;
+  last_error?: string;
+}
+
+export interface RemoteIDStats {
+  timestamp_ms?: number;
+  frames?: number;
+  decoded?: number;
+  dropped?: number;
+  dedupe_hits?: number;
+  last_error?: string;
+}
+
+export interface RemoteIDReplayState {
+  timestamp_ms?: number;
+  active?: boolean;
+  source?: string;
+  state?: string;
+  speed?: number;
+  position?: number;
+  total?: number;
 }
 
 export interface IngestState {
+  status?: "ok" | "degraded" | "offline" | "unknown";
+  scan_active?: boolean;
+  capture_active?: boolean;
+  mode?: "live" | "replay" | "off";
+  contacts_active?: number;
+  last_update_ms?: number;
+  last_error?: string;
   last_event_type?: string;
   last_event?: JsonObject;
   last_timestamp_ms?: number;
@@ -239,17 +428,29 @@ export interface LedState {
 export interface VrxSys {
   uptime_ms?: number;
   heap?: number;
+  status?: string;
+  last_error?: string;
 }
 
 export interface VrxState {
   selected?: number;
+  scan_state?: string;
   vrx?: VrxItem[];
   led?: LedState;
   sys?: VrxSys;
 }
 
+export interface FpvState {
+  selected?: number;
+  scan_state?: string;
+  freq_hz?: number;
+  rssi_raw?: number;
+  locked_channels?: number[];
+}
+
 export interface VideoState {
   selected?: number;
+  status?: "ok" | "offline" | "unknown";
 }
 
 export interface ReplayStateSnapshot {
@@ -259,16 +460,20 @@ export interface ReplayStateSnapshot {
 
 export interface StatusSnapshot {
   timestamp_ms: number;
+  overall_ok?: boolean;
   system?: SystemStats;
   power?: UpsTelemetry;
   rf?: IngestState;
   remote_id?: IngestState;
   vrx?: VrxState;
+  fpv?: FpvState;
   video?: VideoState;
   services?: ServiceStatus[];
   network?: NetworkStatus;
+  gps?: GPSState;
+  esp32?: ESP32State;
+  antsdr?: AntSDRDeviceState;
   audio?: AudioStatus;
   contacts?: Contact[];
   replay?: ReplayStateSnapshot;
 }
-

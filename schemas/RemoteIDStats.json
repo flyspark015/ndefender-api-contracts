@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RemoteIDStats.json",
+  "title": "RemoteID Stats",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "frames": {"type": "integer", "minimum": 0},
+    "decoded": {"type": "integer", "minimum": 0},
+    "dropped": {"type": "integer", "minimum": 0},
+    "dedupe_hits": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

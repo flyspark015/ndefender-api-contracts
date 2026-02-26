@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AntSDRSweepState.json",
+  "title": "AntSDR Sweep State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "running": {"type": "boolean"},
+    "active_plan": {"type": "string"},
+    "plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string"},
+          "start_hz": {"type": "number"},
+          "end_hz": {"type": "number"},
+          "step_hz": {"type": "number"}
+        }
+      }
+    },
+    "last_update_ms": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

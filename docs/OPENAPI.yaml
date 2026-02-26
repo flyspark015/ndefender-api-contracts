@@ -13,22 +13,10 @@ servers:
     description: System Controller (default)
   - url: http://127.0.0.1:9109/api/v1
     description: Observability (default)
-security:
-  - ApiKeyAuth: []
-    RoleAuth: []
+security: []
 
 components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: Backend Aggregator + System Controller + Observability
-    RoleAuth:
-      type: apiKey
-      in: header
-      name: X-Role
-      description: Backend Aggregator RBAC header (viewer/operator/admin)
+  securitySchemes: {}
   schemas:
     ErrorDetail:
       type: object
@@ -57,20 +45,7 @@ components:
         timestamp_ms: { type: integer, minimum: 0 }
 
     SystemStats:
-      type: object
-      additionalProperties: false
-      properties:
-        uptime_s: { type: integer }
-        cpu_temp_c: { type: number }
-        cpu_usage_percent: { type: number }
-        load_1m: { type: number }
-        load_5m: { type: number }
-        load_15m: { type: number }
-        ram_used_mb: { type: integer }
-        ram_total_mb: { type: integer }
-        disk_used_gb: { type: integer }
-        disk_total_gb: { type: integer }
-        throttled_flags: { type: integer }
+      $ref: ../schemas/SystemStats.json
 
     UpsTelemetry:
       $ref: ../schemas/UPS_Telemetry.json
@@ -93,13 +68,40 @@ components:
         ssid: { type: string }
         ip_v4: { type: string }
         ip_v6: { type: string }
+        wifi: { $ref: ../schemas/WifiState.json }
+        bluetooth: { $ref: ../schemas/BluetoothState.json }
 
     AudioStatus:
-      type: object
-      additionalProperties: false
-      properties:
-        volume_percent: { type: integer }
-        muted: { type: boolean }
+      $ref: ../schemas/AudioState.json
+
+    WifiState:
+      $ref: ../schemas/WifiState.json
+    WifiScanResult:
+      $ref: ../schemas/WifiScanResult.json
+    BluetoothState:
+      $ref: ../schemas/BluetoothState.json
+    BluetoothDeviceList:
+      $ref: ../schemas/BluetoothDeviceList.json
+    GPSState:
+      $ref: ../schemas/GPSState.json
+    ESP32State:
+      $ref: ../schemas/ESP32State.json
+    ESP32Config:
+      $ref: ../schemas/ESP32Config.json
+    AntSDRDeviceState:
+      $ref: ../schemas/AntSDRDeviceState.json
+    AntSDRSweepState:
+      $ref: ../schemas/AntSDRSweepState.json
+    AntSDRGainState:
+      $ref: ../schemas/AntSDRGainState.json
+    AntSDRStats:
+      $ref: ../schemas/AntSDRStats.json
+    RemoteIDState:
+      $ref: ../schemas/RemoteIDState.json
+    RemoteIDStats:
+      $ref: ../schemas/RemoteIDStats.json
+    RemoteIDReplayState:
+      $ref: ../schemas/RemoteIDReplayState.json
 
     HealthResponse:
       type: object
@@ -124,6 +126,7 @@ components:
         ups: { $ref: "#/components/schemas/UpsTelemetry" }
         services: { type: array, items: { $ref: "#/components/schemas/ServiceStatus" } }
         network: { $ref: "#/components/schemas/NetworkStatus" }
+        gps: { $ref: "#/components/schemas/GPSState" }
         audio: { $ref: "#/components/schemas/AudioStatus" }
 
     ObservabilityStatus:
@@ -386,6 +389,624 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /network/wifi/state:
+    get:
+      summary: Backend Aggregator Wi-Fi state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Wi-Fi state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WifiState" }
+
+  /network/wifi/scan:
+    get:
+      summary: Backend Aggregator Wi-Fi scan
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Wi-Fi scan results
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WifiScanResult" }
+
+  /network/bluetooth/state:
+    get:
+      summary: Backend Aggregator Bluetooth state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Bluetooth state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BluetoothState" }
+
+  /network/bluetooth/devices:
+    get:
+      summary: Backend Aggregator Bluetooth devices
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Bluetooth devices
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BluetoothDeviceList" }
+
+  /gps:
+    get:
+      summary: Backend Aggregator GPS state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: GPS state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GPSState" }
+
+  /esp32:
+    get:
+      summary: Backend Aggregator ESP32 state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: ESP32 state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ESP32State" }
+
+  /esp32/config:
+    get:
+      summary: Backend Aggregator ESP32 config
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: ESP32 config
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ESP32Config" }
+    post:
+      summary: Backend Aggregator write ESP32 config
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    config: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200":
+          description: Command result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommandResult" }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /antsdr:
+    get:
+      summary: Backend Aggregator AntSDR summary
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: AntSDR device state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRDeviceState" }
+
+  /antsdr/sweep/state:
+    get:
+      summary: Backend Aggregator AntSDR sweep state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: AntSDR sweep state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRSweepState" }
+
+  /antsdr/gain:
+    get:
+      summary: Backend Aggregator AntSDR gain state
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: AntSDR gain state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRGainState" }
+
+  /antsdr/stats:
+    get:
+      summary: Backend Aggregator AntSDR stats
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: AntSDR stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRStats" }
+
+  /remote_id:
+    get:
+      summary: Backend Aggregator RemoteID summary
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: RemoteID state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDState" }
+
+  /remote_id/contacts:
+    get:
+      summary: Backend Aggregator RemoteID contacts
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: Contact list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp_ms: { type: integer }
+                  contacts:
+                    type: array
+                    items: { $ref: "#/components/schemas/Contact" }
+
+  /remote_id/stats:
+    get:
+      summary: Backend Aggregator RemoteID stats
+      tags: [Aggregator]
+      responses:
+        "200":
+          description: RemoteID stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDStats" }
+
+  /audio/mute:
+    post:
+      summary: Mute/unmute audio
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    muted: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /audio/volume:
+    post:
+      summary: Set audio volume
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    volume_percent: { type: integer }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/wifi/enable:
+    post:
+      summary: Enable or disable Wi-Fi
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/wifi/connect:
+    post:
+      summary: Connect to Wi-Fi
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    ssid: { type: string }
+                    password: { type: string }
+                    hidden: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/wifi/disconnect:
+    post:
+      summary: Disconnect Wi-Fi
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/enable:
+    post:
+      summary: Enable or disable Bluetooth
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/scan/start:
+    post:
+      summary: Start Bluetooth scan
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/scan/stop:
+    post:
+      summary: Stop Bluetooth scan
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/pair:
+    post:
+      summary: Pair Bluetooth device
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    addr: { type: string }
+                    pin: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/unpair:
+    post:
+      summary: Unpair Bluetooth device
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    addr: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /gps/restart:
+    post:
+      summary: Restart GPS service
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: confirm required, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /esp32/buzzer:
+    post:
+      summary: ESP32 buzzer control
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    mode: { type: string }
+                    duration_ms: { type: integer }
+                    pattern: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /esp32/leds:
+    post:
+      summary: ESP32 LED control
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    red: { type: boolean }
+                    yellow: { type: boolean }
+                    green: { type: boolean }
+                    pattern: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /esp32/buttons/simulate:
+    post:
+      summary: Simulate ESP32 button press (local-only)
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    button: { type: string }
+                    action: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: local only, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr/sweep/start:
+    post:
+      summary: Start AntSDR sweep
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    plan: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr/sweep/stop:
+    post:
+      summary: Stop AntSDR sweep
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr/gain/set:
+    post:
+      summary: Set AntSDR gain
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    mode: { type: string }
+                    gain_db: { type: number }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr/device/reset:
+    post:
+      summary: Reset AntSDR device (dangerous)
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: confirm required, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /remote_id/monitor/start:
+    post:
+      summary: Start RemoteID capture
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /remote_id/monitor/stop:
+    post:
+      summary: Stop RemoteID capture
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
   /vrx/tune:
     post:
@@ -709,6 +1330,7 @@ paths:
             schema:
               type: object
               properties:
+                payload: { type: object }
                 confirm: { type: boolean }
       responses:
         "200":
@@ -726,6 +1348,11 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorDetail" }
+        "403":
+          description: unsafe disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
 
   /system-controller/network:
     get:
@@ -740,6 +1367,284 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/NetworkStatus" }
 
+  /system-controller/network/wifi/state:
+    get:
+      summary: System Controller Wi-Fi state
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Wi-Fi state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WifiState" }
+
+  /system-controller/network/wifi/scan:
+    get:
+      summary: System Controller Wi-Fi scan
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Wi-Fi scan results
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WifiScanResult" }
+
+  /system-controller/network/bluetooth/state:
+    get:
+      summary: System Controller Bluetooth state
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Bluetooth state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BluetoothState" }
+
+  /system-controller/network/bluetooth/devices:
+    get:
+      summary: System Controller Bluetooth devices
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: Bluetooth devices
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BluetoothDeviceList" }
+
+  /system-controller/network/wifi/enable:
+    post:
+      summary: Enable or disable Wi-Fi
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/wifi/connect:
+    post:
+      summary: Connect to Wi-Fi
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    ssid: { type: string }
+                    password: { type: string }
+                    hidden: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/wifi/disconnect:
+    post:
+      summary: Disconnect Wi-Fi
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/enable:
+    post:
+      summary: Enable or disable Bluetooth
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/scan/start:
+    post:
+      summary: Start Bluetooth scan
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/scan/stop:
+    post:
+      summary: Stop Bluetooth scan
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/pair:
+    post:
+      summary: Pair Bluetooth device
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    addr: { type: string }
+                    pin: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/unpair:
+    post:
+      summary: Unpair Bluetooth device
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    addr: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/gps:
+    get:
+      summary: System Controller GPS state
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      responses:
+        "200":
+          description: GPS state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GPSState" }
+
+  /system-controller/gps/restart:
+    post:
+      summary: Restart GPS service
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: confirm required, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
   /system-controller/audio:
     get:
       summary: System Controller audio status
@@ -753,6 +1658,54 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AudioStatus" }
 
+  /system-controller/audio/mute:
+    post:
+      summary: Set audio mute
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    muted: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/audio/volume:
+    post:
+      summary: Set audio volume
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    volume_percent: { type: integer }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
   /system-controller/system/reboot:
     post:
       summary: System Controller reboot
@@ -765,8 +1718,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [confirm]
               properties:
+                payload: { type: object }
                 confirm: { type: boolean }
       responses:
         "200":
@@ -802,8 +1755,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [confirm]
               properties:
+                payload: { type: object }
                 confirm: { type: boolean }
       responses:
         "200":
@@ -948,3 +1901,390 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  # -----------------------
+  # AntSDR Scan Local API
+  # -----------------------
+
+  /antsdr-scan/health:
+    get:
+      summary: AntSDR Scan health
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Health ok
+          content:
+            application/json:
+              schema: { type: object }
+
+  /antsdr-scan/version:
+    get:
+      summary: AntSDR Scan version
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Version
+          content:
+            application/json:
+              schema: { type: object }
+
+  /antsdr-scan/stats:
+    get:
+      summary: AntSDR Scan stats
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRStats" }
+
+  /antsdr-scan/device:
+    get:
+      summary: AntSDR device state
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Device state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRDeviceState" }
+
+  /antsdr-scan/sweep/state:
+    get:
+      summary: AntSDR sweep state
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Sweep state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRSweepState" }
+
+  /antsdr-scan/gain:
+    get:
+      summary: AntSDR gain state
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Gain state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AntSDRGainState" }
+
+  /antsdr-scan/config:
+    get:
+      summary: AntSDR config
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Config
+          content:
+            application/json:
+              schema: { type: object }
+
+  /antsdr-scan/config/reload:
+    post:
+      summary: AntSDR config reload
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      responses:
+        "200":
+          description: Reload ok
+          content:
+            application/json:
+              schema: { type: object }
+        "409":
+          description: conflict
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorDetail" }
+
+  /antsdr-scan/sweep/start:
+    post:
+      summary: AntSDR sweep start
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    plan: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr-scan/sweep/stop:
+    post:
+      summary: AntSDR sweep stop
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr-scan/gain/set:
+    post:
+      summary: AntSDR set gain
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    mode: { type: string }
+                    gain_db: { type: number }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr-scan/device/reset:
+    post:
+      summary: AntSDR device reset (dangerous)
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr-scan/device/calibrate:
+    post:
+      summary: AntSDR device calibrate (dangerous)
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    kind: { type: string }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /antsdr-scan/events/last:
+    get:
+      summary: AntSDR recent events
+      tags: [AntSDR Scan]
+      servers:
+        - url: http://127.0.0.1:8890/api/v1
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Events list
+          content:
+            application/json:
+              schema: { type: object }
+
+  # -----------------------
+  # RemoteID Engine Local API
+  # -----------------------
+
+  /remoteid-engine/status:
+    get:
+      summary: RemoteID status
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDState" }
+
+  /remoteid-engine/health:
+    get:
+      summary: RemoteID health
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      responses:
+        "200":
+          description: Health
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDState" }
+
+  /remoteid-engine/contacts:
+    get:
+      summary: RemoteID contacts
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      responses:
+        "200":
+          description: Contact list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp_ms: { type: integer }
+                  contacts:
+                    type: array
+                    items: { $ref: "#/components/schemas/Contact" }
+
+  /remoteid-engine/stats:
+    get:
+      summary: RemoteID stats
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDStats" }
+
+  /remoteid-engine/replay/state:
+    get:
+      summary: RemoteID replay state
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      responses:
+        "200":
+          description: Replay state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemoteIDReplayState" }
+
+  /remoteid-engine/replay/start:
+    post:
+      summary: Start replay
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    source: { type: string }
+                    interval_ms: { type: integer }
+                    loop: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: \"#/components/schemas/CommandResult\" } } } }
+
+  /remoteid-engine/replay/stop:
+    post:
+      summary: Stop replay
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: \"#/components/schemas/CommandResult\" } } } }
+
+  /remoteid-engine/monitor/start:
+    post:
+      summary: Start RemoteID capture
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: \"#/components/schemas/CommandResult\" } } } }
+
+  /remoteid-engine/monitor/stop:
+    post:
+      summary: Stop RemoteID capture
+      tags: [RemoteID Engine]
+      servers:
+        - url: http://127.0.0.1:9001/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: \"#/components/schemas/CommandResult\" } } } }

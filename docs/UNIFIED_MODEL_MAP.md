@@ -25,13 +25,12 @@ System Controller envelope source
 ### JsonlEventEnvelope (AntSDR + RemoteID)
 Used in JSONL emission and ingestion.
 - `type` string.
-- `timestamp` integer. Epoch ms.
+- `timestamp_ms` integer. Epoch ms.
 - `source` string.
 - `data` object.
 
 Notes
-- Backend Aggregator accepts both `timestamp` and `timestamp_ms` and normalizes to `timestamp_ms`.
-- AntSDR and RemoteID JSONL schemas both use `timestamp`.
+- Backend Aggregator normalizes JSONL inputs to `timestamp_ms`.
 
 AntSDR schema source
 - `src/ndefender_antsdr_scan/events/schema.json`
@@ -47,14 +46,19 @@ Source
 
 Fields
 - `timestamp_ms` integer.
+- `overall_ok` boolean.
 - `system` object. Source: System Controller `/api/v1/status` → `system`.
 - `power` object. Source: System Controller `/api/v1/status` → `ups`.
 - `rf` object. Source: AntSDR JSONL tailer state (`last_event_type`, `last_event`, `last_timestamp_ms`).
 - `remote_id` object. Source: RemoteID JSONL tailer state (`last_event_type`, `last_event`, `last_timestamp_ms`).
 - `vrx` object. Source: ESP32 telemetry.
+- `fpv` object. Source: ESP32 telemetry (mirrored selection).
 - `video` object. Source: ESP32 telemetry.
 - `services` array. Source: System Controller `/api/v1/status` → `services`.
 - `network` object. Source: System Controller `/api/v1/status` → `network`.
+- `gps` object. Source: System Controller `/api/v1/status` → `gps`.
+- `esp32` object. Source: ESP32 heartbeat/telemetry.
+- `antsdr` object. Source: AntSDR `/api/v1/device` and sweep state.
 - `audio` object. Source: System Controller `/api/v1/status` → `audio`.
 - `contacts` array. Source: ContactStore merge of RemoteID + RF + FPV contacts.
 - `replay` object. Source: RemoteID replay state tracking.
@@ -115,6 +119,7 @@ FPV contact fields (ESP32)
 - `freq_hz` number.
 - `rssi_raw` integer.
 - `selected` integer.
+- `last_seen_uptime_ms` integer (optional).
 
 Sources
 - Contact merge logic: `src/ndefender_backend_aggregator/contacts.py`
@@ -292,4 +297,3 @@ Fields
 - `path` string.
 - `size_bytes` integer.
 - `created_ts` integer.
-

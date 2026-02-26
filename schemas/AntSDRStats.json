@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AntSDRStats.json",
+  "title": "AntSDR Stats",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "frames_processed": {"type": "integer", "minimum": 0},
+    "events_emitted": {"type": "integer", "minimum": 0},
+    "last_event_timestamp_ms": {"type": "integer", "minimum": 0},
+    "noise_floor_db": {"type": "number"},
+    "peaks": {"type": "integer", "minimum": 0},
+    "last_error": {"type": "string"}
+  }
+}

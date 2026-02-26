@@ -128,7 +128,8 @@
             "vrx_id": {"type": "integer"},
             "freq_hz": {"type": "number"},
             "rssi_raw": {"type": "integer"},
-            "selected": {"type": "integer"}
+            "selected": {"type": "integer"},
+            "last_seen_uptime_ms": {"type": "integer", "minimum": 0}
           }
         }
       ]

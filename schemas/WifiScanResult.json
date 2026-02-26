@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WifiScanResult.json",
+  "title": "Wi-Fi Scan Result",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "networks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ssid": {"type": "string"},
+          "bssid": {"type": "string"},
+          "security": {"type": "string"},
+          "signal_dbm": {"type": "integer"},
+          "channel": {"type": "integer"},
+          "frequency_mhz": {"type": "integer"},
+          "known": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

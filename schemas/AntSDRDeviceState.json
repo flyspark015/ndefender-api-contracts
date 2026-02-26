@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AntSDRDeviceState.json",
+  "title": "AntSDR Device State",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "connected": {"type": "boolean"},
+    "uri": {"type": "string"},
+    "temperature_c": {"type": "number"},
+    "last_error": {"type": "string"}
+  }
+}
