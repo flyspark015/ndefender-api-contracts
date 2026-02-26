@@ -21,9 +21,11 @@ All commands use `{payload,confirm}`.
 
 - `POST /services/{name}/restart` (confirm required)
 - `POST /network/wifi/enable`
+- `POST /network/wifi/disable`
 - `POST /network/wifi/connect`
 - `POST /network/wifi/disconnect`
 - `POST /network/bluetooth/enable`
+- `POST /network/bluetooth/disable`
 - `POST /network/bluetooth/scan/start`
 - `POST /network/bluetooth/scan/stop`
 - `POST /network/bluetooth/pair`

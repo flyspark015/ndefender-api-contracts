@@ -641,6 +641,26 @@ paths:
         "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
         "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
+  /network/wifi/disable:
+    post:
+      summary: Disable Wi-Fi
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
   /network/wifi/connect:
     post:
       summary: Connect to Wi-Fi
@@ -700,6 +720,26 @@ paths:
                   type: object
                   properties:
                     enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
+
+  /network/bluetooth/disable:
+    post:
+      summary: Disable Bluetooth
+      tags: [Aggregator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
                 confirm: { type: boolean }
       responses:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
@@ -1444,6 +1484,28 @@ paths:
         "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
         "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
 
+  /system-controller/network/wifi/disable:
+    post:
+      summary: Disable Wi-Fi
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
   /system-controller/network/wifi/connect:
     post:
       summary: Connect to Wi-Fi
@@ -1509,6 +1571,28 @@ paths:
                   type: object
                   properties:
                     enabled: { type: boolean }
+                confirm: { type: boolean }
+      responses:
+        "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }
+        "400": { description: bad request, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "409": { description: invalid state, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+        "429": { description: rate limited, content: { application/json: { schema: { $ref: \"#/components/schemas/ErrorDetail\" } } } }
+
+  /system-controller/network/bluetooth/disable:
+    post:
+      summary: Disable Bluetooth
+      tags: [System Controller]
+      servers:
+        - url: http://127.0.0.1:8000/api/v1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload: { type: object }
                 confirm: { type: boolean }
       responses:
         "200": { description: Command ACK, content: { application/json: { schema: { $ref: \"#/components/schemas/EventEnvelope\" } } } }

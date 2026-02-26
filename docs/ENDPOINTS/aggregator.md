@@ -43,9 +43,11 @@ All commands use:
 - `POST /audio/mute`
 - `POST /audio/volume`
 - `POST /network/wifi/enable`
+- `POST /network/wifi/disable`
 - `POST /network/wifi/connect`
 - `POST /network/wifi/disconnect`
 - `POST /network/bluetooth/enable`
+- `POST /network/bluetooth/disable`
 - `POST /network/bluetooth/scan/start`
 - `POST /network/bluetooth/scan/stop`
 - `POST /network/bluetooth/pair`

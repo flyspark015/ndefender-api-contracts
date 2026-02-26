@@ -732,6 +732,21 @@ Errors: `400`, `403`, `409`, `429`.
 
 ---
 
+#### `POST /network/wifi/disable`
+Example request:
+```json
+{"payload":{},"confirm":false}
+```
+
+Example response:
+```json
+{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+
+Errors: `400`, `403`, `409`, `429`.
+
+---
+
 #### `POST /network/wifi/connect`
 Payload fields: `ssid` string, `password` string, `hidden` boolean (optional)
 
@@ -775,6 +790,21 @@ Example request:
 Example response:
 ```json
 {"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+
+Errors: `400`, `403`, `409`, `429`.
+
+---
+
+#### `POST /network/bluetooth/disable`
+Example request:
+```json
+{"payload":{},"confirm":false}
+```
+
+Example response:
+```json
+{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
 Errors: `400`, `403`, `409`, `429`.
@@ -1381,6 +1411,21 @@ Errors: `400`, `403`, `409`, `429`.
 
 ---
 
+### `POST /network/wifi/disable`
+Request body:
+```json
+{"payload":{},"confirm":false}
+```
+
+Response:
+```json
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"network/wifi/disable","ok":true,"reason":null}}
+```
+
+Errors: `400`, `403`, `409`, `429`.
+
+---
+
 ### `POST /network/wifi/connect`
 Request body:
 ```json
@@ -1420,6 +1465,21 @@ Request body:
 Response:
 ```json
 {"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"network/bluetooth/enable","ok":true,"reason":null}}
+```
+
+Errors: `400`, `403`, `409`, `429`.
+
+---
+
+### `POST /network/bluetooth/disable`
+Request body:
+```json
+{"payload":{},"confirm":false}
+```
+
+Response:
+```json
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"network/bluetooth/disable","ok":true,"reason":null}}
 ```
 
 Errors: `400`, `403`, `409`, `429`.
