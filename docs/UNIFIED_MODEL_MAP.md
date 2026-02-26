@@ -174,7 +174,7 @@ Source
 
 Fields
 - `state` enum. `offline|ok|degraded|replay`.
-- `last_ts` integer.
+- `last_update_ms` integer.
 - `contacts_active` integer.
 - `mode` enum. `live|replay`.
 

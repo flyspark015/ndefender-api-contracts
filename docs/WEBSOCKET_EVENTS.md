@@ -221,7 +221,7 @@ RemoteID health telemetry event.
   "type": "TELEMETRY_UPDATE",
   "timestamp_ms": 1700000000000,
   "source": "remoteid",
-  "data": {"state":"ok","last_ts":1700000000000,"contacts_active":1,"mode":"live"}
+  "data": {"state":"ok","last_update_ms":1700000000000,"contacts_active":1,"mode":"live"}
 }
 ```
 
