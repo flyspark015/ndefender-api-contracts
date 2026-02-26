@@ -33,23 +33,21 @@ Used by `/api/v1/events` in AntSDR Scan (local API).
 ```json
 {
   "type": "RF_CONTACT_UPDATE",
-  "timestamp": 1700000000000,
+  "timestamp_ms": 1700000000000,
   "source": "antsdr",
   "data": {}
 }
 ```
 
 Notes:
-- AntSDR events use `timestamp` (not `timestamp_ms`).
-- Backend Aggregator and System Controller use `timestamp_ms`.
+- Backend Aggregator, System Controller, and AntSDR REST/WS events use `timestamp_ms`.
 
 ---
 
 ## 🔌 Reconnect + Snapshot Behavior
 
 ### Backend Aggregator
-- On connect, server sends a **SYSTEM_UPDATE** with the full snapshot.
-- Client should keep the socket alive by sending periodic messages (server reads `receive_text()`).
+- On connect, server may send a **HELLO** (contract gap) followed by **SYSTEM_UPDATE** with the full snapshot.
 - On reconnect: re-fetch snapshot via `GET /api/v1/status` and then re-connect WS.
 
 ### System Controller
@@ -64,6 +62,11 @@ Notes:
 - Use `GET /api/v1/events/last?limit=N` to load a snapshot.
 - Then connect to WS for live stream.
 
+## ❤️ Liveness Requirement
+- Clients and tests expect **≥3 messages within 10 seconds**.
+- Backend Aggregator should send `HELLO` + `SYSTEM_UPDATE` on connect, then periodic liveness events.
+- If `HEARTBEAT` is used, it must follow the canonical WS envelope and is documented as a **CONTRACT GAP**.
+
 ---
 
 ## 🌐 Backend Aggregator WS Events (Primary)
@@ -71,6 +74,12 @@ Notes:
 
 Auth:
 - No API key enforcement in code. Deploy behind network controls or proxy if required.
+
+### HELLO *(CONTRACT GAP)*
+Optional connection acknowledgement.
+```json
+{"type":"HELLO","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000}}
+```
 
 ### SYSTEM_UPDATE
 Full system snapshot.
@@ -81,17 +90,19 @@ Full system snapshot.
   "source": "aggregator",
   "data": {
     "timestamp_ms": 1700000000000,
-    "system": {},
-    "power": {},
-    "rf": {},
-    "remote_id": {},
-    "vrx": {},
-    "video": {},
+    "system": {"status":"degraded","cpu_temp_c":36.9,"cpu_usage_percent":15.8,"ram_used_mb":1931,"ram_total_mb":16215,"disk_used_gb":70,"disk_total_gb":117,"uptime_s":4671},
+    "power": {"status":"ok","pack_voltage_v":16.62,"current_a":-0.01,"soc_percent":98,"state":"IDLE"},
+    "rf": {"status":"offline","last_error":"antsdr_unreachable","scan_active":false,"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1700000000000,"last_event":{"reason":"antsdr_unreachable"}},
+    "remote_id": {"state":"DEGRADED","mode":"live","capture_active":true,"last_error":"no_odid_frames","last_event_type":"REMOTEID_STALE","last_timestamp_ms":1700000000000,"last_event":{"reason":"no_odid_frames"}},
+    "vrx": {"selected":1,"scan_state":"idle","vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":632}]},
+    "fpv": {"selected":1,"scan_state":"idle","freq_hz":5740000000,"rssi_raw":632},
+    "video": {"selected": 1, "status": "ok"},
     "services": [],
-    "network": {},
-    "audio": {},
+    "network": {"status":"ok","connected":true,"ip_v4":"192.168.1.35","ssid":"example"},
+    "audio": {"status":"ok","muted":false,"volume_percent":100},
     "contacts": [],
-    "replay": {}
+    "replay": {"active":false,"source":"none"},
+    "overall_ok": false
   }
 }
 ```
@@ -116,7 +127,7 @@ ESP32 telemetry passthrough.
   "source": "esp32",
   "data": {
     "type": "telemetry",
-    "timestamp_ms": 1000,
+    "timestamp_ms": 1700000000000,
     "sel": 1,
     "vrx": [
       {"id":1,"freq_hz":5740000000,"rssi_raw":219},
@@ -137,7 +148,7 @@ Subsystem log event.
   "type": "LOG_EVENT",
   "timestamp_ms": 1700000000000,
   "source": "esp32",
-  "data": {"type":"log_event","timestamp_ms":1000,"message":"boot"}
+  "data": {"type":"log_event","timestamp_ms":1700000000000,"message":"boot"}
 }
 ```
 
@@ -313,7 +324,7 @@ Example:
 ```json
 {
   "type": "RF_CONTACT_NEW",
-  "timestamp": 1700000000000,
+  "timestamp_ms": 1700000000000,
   "source": "antsdr",
   "data": {
     "id": "rf:2500000000",
@@ -348,7 +359,8 @@ Example:
 
 | Event Type | Source | WS Endpoint |
 | --- | --- | --- |
-| `HEARTBEAT` | Backend Aggregator | `/api/v1/ws` |
+| `HELLO` *(CONTRACT GAP)* | Backend Aggregator | `/api/v1/ws` |
+| `HEARTBEAT` *(CONTRACT GAP)* | Backend Aggregator | `/api/v1/ws` |
 | `SYSTEM_UPDATE` | Backend Aggregator | `/api/v1/ws` |
 | `COMMAND_ACK` | Backend Aggregator | `/api/v1/ws` |
 | `ESP32_TELEMETRY` | Backend Aggregator | `/api/v1/ws` |
@@ -371,3 +383,5 @@ Example:
 | `RF_CONTACT_NEW` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_UPDATE` | AntSDR Scan | `/api/v1/events` |
 | `RF_CONTACT_LOST` | AntSDR Scan | `/api/v1/events` |
+
+> CONTRACT GAP: `HEARTBEAT` is emitted by production WS to keep clients live but is not formalized in the core contract. See `docs/CONTRACT_GAPS.md`.

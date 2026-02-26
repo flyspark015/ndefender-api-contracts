@@ -23,15 +23,15 @@ System Controller envelope source
 - `src/ndefender_system_controller/models.py`
 
 ### JsonlEventEnvelope (AntSDR + RemoteID)
-Used in JSONL emission and ingestion.
+Used in JSONL emission and ingestion, normalized to public contract when exposed.
 - `type` string.
-- `timestamp` integer. Epoch ms.
+- `timestamp_ms` integer. Epoch ms.
 - `source` string.
 - `data` object.
 
 Notes
-- Backend Aggregator accepts both `timestamp` and `timestamp_ms` and normalizes to `timestamp_ms`.
-- AntSDR and RemoteID JSONL schemas both use `timestamp`.
+- All public REST/WS surfaces must use `timestamp_ms`.
+- If a producer emits legacy `timestamp`, normalize before exposure and treat as a contract gap (see `docs/CONTRACT_GAPS.md`).
 
 AntSDR schema source
 - `src/ndefender_antsdr_scan/events/schema.json`

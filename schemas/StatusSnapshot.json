@@ -102,6 +102,7 @@
       "additionalProperties": false,
       "properties": {
         "selected": {"type": "integer"},
+        "scan_state": {"type": "string"},
         "vrx": {"type": "array", "items": {"$ref": "#/$defs/vrx_item"}},
         "led": {"$ref": "#/$defs/led_state"},
         "sys": {"$ref": "#/$defs/vrx_sys"}
@@ -142,7 +143,8 @@
       "additionalProperties": false,
       "properties": {
         "uptime_ms": {"type": "integer"},
-        "heap": {"type": "integer"}
+        "heap": {"type": "integer"},
+        "status": {"type": "string"}
       }
     },
     "video_state": {

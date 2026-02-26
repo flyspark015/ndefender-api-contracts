@@ -34,7 +34,8 @@ This document is the single, production-grade reference for **all REST + WebSock
 
 ## ⏱️ Units & Naming Rules
 - Timestamps are integer **milliseconds** since epoch unless noted.
-- JSONL uses `timestamp`; REST/WS uses `timestamp_ms`.
+- All public REST/WS fields use `timestamp_ms` (epoch ms).
+- Uptime-based fields must be explicitly named `*_uptime_ms`.
 - Frequencies use Hertz: `freq_hz`, `bucket_hz`, `step_hz`, `start_hz`, `stop_hz`.
 - Latitude/Longitude use decimal degrees: `lat`, `lon`.
 - Distances use meters when present: `distance_m`.
@@ -68,7 +69,6 @@ Common errors:
 - `429` Rate limit exceeded (command endpoints)
 
 ### `GET /health`
-### `GET /health`
 **Auth:** None (no headers required).
 
 Response fields:
@@ -80,7 +80,7 @@ Example response:
 {"status":"ok","timestamp_ms":1700000000000}
 ```
 
-Errors: `403`.
+Errors: `500`.
 
 ---
 
@@ -107,23 +107,62 @@ Example response:
 ```json
 {
   "timestamp_ms": 1700000000000,
-  "system": {"status": "ok"},
-  "power": {"status": "ok"},
-  "rf": {"status": "offline", "last_error": "antsdr_unreachable", "scan_active": false},
-  "remote_id": {"state": "degraded", "capture_active": true, "last_error": "no_odid_frames"},
-  "vrx": {"selected": 1, "vrx": []},
-  "fpv": {"selected": 1, "freq_hz": 5740000000, "rssi_raw": 120},
+  "system": {
+    "status": "degraded",
+    "cpu_temp_c": 36.9,
+    "cpu_usage_percent": 15.8,
+    "ram_used_mb": 1931,
+    "ram_total_mb": 16215,
+    "disk_used_gb": 70,
+    "disk_total_gb": 117,
+    "uptime_s": 4671
+  },
+  "power": {
+    "status": "ok",
+    "pack_voltage_v": 16.62,
+    "current_a": -0.01,
+    "soc_percent": 98,
+    "state": "IDLE"
+  },
+  "rf": {
+    "status": "offline",
+    "last_error": "antsdr_unreachable",
+    "scan_active": false,
+    "last_event_type": "RF_SCAN_OFFLINE",
+    "last_timestamp_ms": 1700000000000,
+    "last_event": {"reason": "antsdr_unreachable"}
+  },
+  "remote_id": {
+    "state": "DEGRADED",
+    "mode": "live",
+    "capture_active": true,
+    "last_error": "no_odid_frames",
+    "last_event_type": "REMOTEID_STALE",
+    "last_timestamp_ms": 1700000000000,
+    "last_event": {"reason": "no_odid_frames"}
+  },
+  "vrx": {
+    "selected": 1,
+    "scan_state": "idle",
+    "vrx": [{"id": 1, "freq_hz": 5740000000, "rssi_raw": 632}]
+  },
+  "fpv": {
+    "selected": 1,
+    "scan_state": "idle",
+    "freq_hz": 5740000000,
+    "rssi_raw": 632
+  },
   "video": {"selected": 1, "status": "ok"},
-  "services": [],
-  "network": {},
-  "audio": {},
+  "services": [{"name": "ndefender-backend", "active_state": "active", "sub_state": "running", "restart_count": 0}],
+  "network": {"status": "ok", "connected": true, "ip_v4": "192.168.1.35", "ssid": "example"},
+  "audio": {"status": "ok", "muted": false, "volume_percent": 100},
   "contacts": [],
   "replay": {"active": false, "source": "none"},
   "overall_ok": false
 }
 ```
 
-Errors: `403`.
+Errors: `500`.
 
 ---
 
@@ -185,7 +224,7 @@ Example response:
 }
 ```
 
-Errors: `403`.
+Errors: `500`.
 
 ---
 
@@ -204,11 +243,14 @@ Response fields (System Controller `SystemStats`):
 - `disk_used_gb` integer
 - `disk_total_gb` integer
 - `throttled_flags` integer
+- `status` string (optional)
 
 Example response:
 ```json
 {"cpu_temp_c":45.2,"cpu_usage_percent":12.5,"ram_used_mb":410,"disk_used_gb":12}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -225,11 +267,14 @@ Response fields (UPS telemetry):
 - `time_to_full_s` integer
 - `per_cell_v` array of number
 - `state` string (`IDLE|CHARGING|FAST_CHARGING|DISCHARGING|UNKNOWN`)
+- `status` string (optional)
 
 Example response:
 ```json
 {"pack_voltage_v":12.4,"current_a":1.2,"soc_percent":78,"state":"DISCHARGING","per_cell_v":[4.1,4.1,4.1]}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -240,11 +285,16 @@ Response fields:
 - `last_event_type` string
 - `last_event` object
 - `last_timestamp_ms` integer
+- `scan_active` boolean (optional)
+- `status` string (optional)
+- `last_error` string (optional)
 
 Example response:
 ```json
-{"last_event_type":"RF_CONTACT_UPDATE","last_event":{"id":"rf:5658000000"},"last_timestamp_ms":1700000000000}
+{"last_event_type":"RF_SCAN_OFFLINE","last_event":{"reason":"antsdr_unreachable"},"last_timestamp_ms":1700000000000,"scan_active":false,"status":"offline","last_error":"antsdr_unreachable"}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -253,11 +303,14 @@ Example response:
 
 Response fields:
 - `selected` integer
+- `status` string (optional)
 
 Example response:
 ```json
-{"selected":2}
+{"selected":2,"status":"ok"}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -275,6 +328,8 @@ Example response:
 [{"name":"ndefender-system-controller","active_state":"active","sub_state":"running","restart_count":1}]
 ```
 
+Errors: `500`.
+
 ---
 
 ### `GET /network`
@@ -285,11 +340,14 @@ Response fields:
 - `ssid` string
 - `ip_v4` string
 - `ip_v6` string
+- `status` string (optional)
 
 Example response:
 ```json
-{"connected":true,"ssid":"MyWiFi","ip_v4":"192.168.1.100","ip_v6":"fe80::1"}
+{"connected":true,"ssid":"MyWiFi","ip_v4":"192.168.1.100","ip_v6":"fe80::1","status":"ok"}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -299,11 +357,14 @@ Example response:
 Response fields:
 - `volume_percent` integer
 - `muted` boolean
+- `status` string (optional)
 
 Example response:
 ```json
-{"volume_percent":60,"muted":false}
+{"volume_percent":60,"muted":false,"status":"ok"}
 ```
+
+Errors: `500`.
 
 ---
 
@@ -327,7 +388,7 @@ Payload fields:
 
 Example request:
 ```json
-{"payload":{"vrx_id":1,"freq_hz":5740000000}}
+{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}
 ```
 
 Example response:
@@ -335,7 +396,7 @@ Example response:
 {"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `403`, `429`, `500`.
 
 ---
 
@@ -350,7 +411,7 @@ Payload fields:
 
 Example request:
 ```json
-{"payload":{"dwell_ms":200,"step_hz":2000000,"start_hz":5645000000,"stop_hz":5865000000}}
+{"payload":{"dwell_ms":200,"step_hz":2000000,"start_hz":5645000000,"stop_hz":5865000000},"confirm":false}
 ```
 
 Example response:
@@ -358,7 +419,7 @@ Example response:
 {"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `403`, `429`, `500`.
 
 ---
 
@@ -367,7 +428,7 @@ Errors: `403`, `429`.
 
 Example request:
 ```json
-{"payload":{}}
+{"payload":{},"confirm":false}
 ```
 
 Example response:
@@ -375,7 +436,7 @@ Example response:
 {"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `403`, `429`, `500`.
 
 ---
 
@@ -387,7 +448,7 @@ Payload fields:
 
 Example request:
 ```json
-{"payload":{"ch":2}}
+{"payload":{"ch":2},"confirm":false}
 ```
 
 Example response:
@@ -395,7 +456,7 @@ Example response:
 {"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`.
+Errors: `403`, `429`, `500`.
 
 ---
 
@@ -417,7 +478,7 @@ Example response:
 {"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `400`, `403`, `429`.
+Errors: `400`, `403`, `429`, `500`.
 
 ---
 
@@ -434,7 +495,7 @@ Example response:
 {"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `400`, `403`, `429`.
+Errors: `400`, `403`, `429`, `500`.
 
 ---
 
@@ -454,15 +515,36 @@ Envelope fields:
 - `data` object
 
 On connect, the server immediately sends **SYSTEM_UPDATE** containing the full snapshot.
-The server also emits **HEARTBEAT** events periodically to keep clients live.
+Some deployments also send `HELLO` (contract gap) for connection acknowledgement.
 
 Example envelope:
 ```json
-{"type":"SYSTEM_UPDATE","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000,"contacts":[]}}
+{
+  "type":"SYSTEM_UPDATE",
+  "timestamp_ms":1700000000000,
+  "source":"aggregator",
+  "data":{
+    "timestamp_ms":1700000000000,
+    "system":{"status":"degraded","cpu_temp_c":36.9,"cpu_usage_percent":15.8,"ram_used_mb":1931,"ram_total_mb":16215,"disk_used_gb":70,"disk_total_gb":117,"uptime_s":4671},
+    "power":{"status":"ok","pack_voltage_v":16.62,"current_a":-0.01,"soc_percent":98,"state":"IDLE"},
+    "rf":{"status":"offline","last_error":"antsdr_unreachable","scan_active":false,"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1700000000000,"last_event":{"reason":"antsdr_unreachable"}},
+    "remote_id":{"state":"DEGRADED","mode":"live","capture_active":true,"last_error":"no_odid_frames","last_event_type":"REMOTEID_STALE","last_timestamp_ms":1700000000000,"last_event":{"reason":"no_odid_frames"}},
+    "vrx":{"selected":1,"scan_state":"idle","vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":632}]},
+    "fpv":{"selected":1,"scan_state":"idle","freq_hz":5740000000,"rssi_raw":632},
+    "video":{"selected":1,"status":"ok"},
+    "services":[{"name":"ndefender-backend","active_state":"active","sub_state":"running","restart_count":0}],
+    "network":{"status":"ok","connected":true,"ip_v4":"192.168.1.35","ssid":"example"},
+    "audio":{"status":"ok","muted":false,"volume_percent":100},
+    "contacts":[],
+    "replay":{"active":false,"source":"none"},
+    "overall_ok":false
+  }
+}
 ```
 
 Event types (full catalog in `docs/WEBSOCKET_EVENTS.md`):
-- `HEARTBEAT`
+- `HELLO` *(CONTRACT GAP)*
+- `HEARTBEAT` *(CONTRACT GAP)*
 - `SYSTEM_UPDATE`
 - `COMMAND_ACK`
 - `ESP32_TELEMETRY`
@@ -483,6 +565,7 @@ Common errors:
 - `400` Confirm required for reboot/shutdown/restart
 - `403` Unsafe operations disabled
 - `429` Cooldown active
+- `500` Internal error
 
 ### `GET /health`
 Response fields:
@@ -510,7 +593,14 @@ Response fields:
 
 Example response:
 ```json
-{"timestamp_ms":1700000000000,"system":{"cpu_temp_c":45.2},"ups":{"soc_percent":78,"state":"DISCHARGING"},"services":[],"network":{},"audio":{}}
+{
+  "timestamp_ms":1700000000000,
+  "system":{"cpu_temp_c":45.2},
+  "ups":{"soc_percent":78,"state":"DISCHARGING"},
+  "services":[],
+  "network":{"connected":true,"ip_v4":"192.168.1.100","ssid":"MyWiFi","status":"ok"},
+  "audio":{"muted":false,"volume_percent":60,"status":"ok"}
+}
 ```
 
 
@@ -659,6 +749,8 @@ Common headers:
 
 Common errors:
 - `429` Rate limit exceeded
+- `403` Local-only endpoint
+- `500` Internal error
 
 ### `GET /health`
 Response:
@@ -819,7 +911,7 @@ Errors: `400`, `404`, `409`.
 ### `GET /events/last?limit=50`
 Response:
 ```json
-{"events":[{"type":"RF_CONTACT_NEW","timestamp":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000}}]}
+{"events":[{"type":"RF_CONTACT_NEW","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000}}]}
 ```
 
 ### `WS /events`
@@ -827,7 +919,7 @@ Response:
 
 Envelope:
 ```json
-{"type":"RF_CONTACT_UPDATE","timestamp":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000}}
+{"type":"RF_CONTACT_UPDATE","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000}}
 ```
 
 ---
@@ -899,5 +991,15 @@ Command:
 ```bash
 curl -X POST http://127.0.0.1:8001/api/v1/vrx/tune \
   -H "Content-Type: application/json" \
-  -d '{"payload":{"vrx_id":1,"freq_hz":5740000000}}'
+  -d '{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}'
 ```
+
+---
+
+## CONTRACT GAPS
+Some runtime behaviors are not yet formalized in this document. See `docs/CONTRACT_GAPS.md` for:
+- HELLO WS event
+- HEARTBEAT WS event
+- StatusSnapshot runtime extras (`fpv`, `overall_ok`, `status/last_error`, `video.status`)
+- `contacts[].last_seen_uptime_ms`
+- Legacy JSONL `timestamp` normalization
