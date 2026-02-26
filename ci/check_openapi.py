@@ -3,13 +3,20 @@ from pathlib import Path
 import sys
 import yaml
 
+root = Path(__file__).resolve().parents[1]
+
 try:
     from openapi_spec_validator import validate_spec
-except Exception as exc:
-    print(f"openapi-spec-validator unavailable: {exc}")
-    sys.exit(1)
-
-root = Path(__file__).resolve().parents[1]
+except Exception:
+    # Allow local virtualenv installs without system-wide packages.
+    venv_lib = root / ".venv" / "lib"
+    for site in venv_lib.glob("python*/site-packages"):
+        sys.path.insert(0, str(site))
+    try:
+        from openapi_spec_validator import validate_spec
+    except Exception as exc:
+        print(f"openapi-spec-validator unavailable: {exc}")
+        sys.exit(1)
 path = root / "docs" / "OPENAPI.yaml"
 
 spec = yaml.safe_load(path.read_text(encoding="utf-8"))
