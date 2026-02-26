@@ -368,19 +368,68 @@ Errors: `500`.
 
 ---
 
-### Command Endpoints
-All command endpoints accept:
+### READ vs WRITE (Commands)
+**Read** endpoints (`GET /status`, `/system`, `/power`, `/rf`, `/video`, `/services`, `/network`, `/audio`, `/contacts`) are safe and idempotent.  
+**Write** endpoints (commands) change system state and are rate-limited and gated.
+
+### Command System (WRITE APIs)
+**Definition**: A command is a state-changing operation issued over REST. It returns a **CommandResult** immediately and may emit a later **COMMAND_ACK** over WS.
+
+**Canonical request body**:
 ```json
 {"payload":{},"confirm":false}
 ```
 
-All command endpoints return **CommandResult**:
+**Canonical CommandResult**:
 ```json
-{"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+{"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
+#### Rate limits & cooldown
+- Commands: **10/min**
+- Dangerous commands (reboot/shutdown): **2/min**
+- When rate-limited: `429` with `{"detail":"rate_limited"}` (may include `Retry-After`).
+
+#### Confirm gating
+- Normal commands: `confirm=false` (or omitted) is allowed.
+- Dangerous commands require `confirm=true`.
+- If `confirm` missing or false on dangerous: `400` `{"detail":"confirm_required"}`
+- Dangerous commands are typically **local-only**; public access may return `403` `{"detail":"local_only"}`.
+- If unsafe ops disabled: `403` `{"detail":"unsafe_disabled"}`
+
+#### WS command acknowledgements
+REST returns immediate acceptance with `command_id`. WS `COMMAND_ACK` indicates completion.
+
+Example `COMMAND_ACK` (ESP32 source):
+```json
+{
+  "type":"COMMAND_ACK",
+  "timestamp_ms":1700000000000,
+  "source":"esp32",
+  "data":{
+    "id":"uuid",
+    "ok":true,
+    "err":null,
+    "data":{"cmd":"SET_VRX_FREQ"}
+  }
+}
+```
+
+Correlation rules:
+- `command_id` from REST should match `data.id` for ESP32 acknowledgements.
+- System acknowledgements may include `data.command` instead of an id.
+
+#### Common error responses (FastAPI)
+- `400` `{"detail":"confirm_required"}`
+- `403` `{"detail":"unsafe_disabled"}` or `{"detail":"local_only"}`
+- `409` `{"detail":"invalid_state"}`
+- `429` `{"detail":"rate_limited"}`
+- `500` `{"detail":"internal_error"}`
+
+---
+
 #### `POST /vrx/tune`
-**Auth:** None (no headers required).
+**Purpose**: tune a VRX channel to a frequency.
 
 Payload fields:
 - `vrx_id` integer (1‑3)
@@ -396,12 +445,17 @@ Example response:
 {"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`, `500`.
+Error examples:
+```json
+{"detail":"invalid_payload"}
+```
+
+Errors: `400`, `403`, `429`, `500`.
 
 ---
 
 #### `POST /scan/start`
-**Auth:** None (no headers required).
+**Purpose**: start RF scan sweep.
 
 Payload fields:
 - `dwell_ms` integer
@@ -419,12 +473,17 @@ Example response:
 {"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`, `500`.
+Error examples:
+```json
+{"detail":"invalid_state"}
+```
+
+Errors: `400`, `403`, `409`, `429`, `500`.
 
 ---
 
 #### `POST /scan/stop`
-**Auth:** None (no headers required).
+**Purpose**: stop RF scan.
 
 Example request:
 ```json
@@ -436,12 +495,17 @@ Example response:
 {"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`, `500`.
+Error examples:
+```json
+{"detail":"invalid_state"}
+```
+
+Errors: `400`, `403`, `409`, `429`, `500`.
 
 ---
 
 #### `POST /video/select`
-**Auth:** None (no headers required).
+**Purpose**: select active video channel.
 
 Payload fields:
 - `ch` integer (1‑3)
@@ -456,12 +520,17 @@ Example response:
 {"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-Errors: `403`, `429`, `500`.
+Error examples:
+```json
+{"detail":"invalid_payload"}
+```
+
+Errors: `400`, `403`, `429`, `500`.
 
 ---
 
 #### `POST /system/reboot`
-**Auth:** None (no headers required).
+**Purpose**: reboot host (dangerous).
 
 Requirements:
 - `confirm=true`
@@ -470,7 +539,7 @@ Requirements:
 
 Example request:
 ```json
-{"confirm":true}
+{"payload":{},"confirm":true}
 ```
 
 Example response:
@@ -478,16 +547,21 @@ Example response:
 {"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
+Error examples:
+```json
+{"detail":"confirm_required"}
+```
+
 Errors: `400`, `403`, `429`, `500`.
 
 ---
 
 #### `POST /system/shutdown`
-Same requirements as reboot.
+**Purpose**: shutdown host (dangerous).
 
 Example request:
 ```json
-{"confirm":true}
+{"payload":{},"confirm":true}
 ```
 
 Example response:
@@ -495,13 +569,12 @@ Example response:
 {"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
+Error examples:
+```json
+{"detail":"confirm_required"}
+```
+
 Errors: `400`, `403`, `429`, `500`.
-
----
-
-### Rate Limits (Aggregator)
-- `command_per_minute`: **10/min**
-- `dangerous_per_minute`: **2/min**
 
 ---
 
@@ -645,12 +718,12 @@ Example response:
 ### `POST /services/{name}/restart`
 Request body:
 ```json
-{"confirm": true}
+{"payload":{},"confirm":true}
 ```
 
 Response:
 ```json
-{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"service_restart","name":"ndefender-system-controller","ok":true}}
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"system","data":{"command":"service_restart","name":"ndefender-system-controller","ok":true,"reason":null}}
 ```
 
 Cooldown: **10s**.
@@ -683,12 +756,12 @@ Example response:
 ### `POST /system/reboot`
 Request body:
 ```json
-{"confirm": true}
+{"payload":{},"confirm":true}
 ```
 
 Response:
 ```json
-{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"reboot","ok":true,"reason":null}}
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"system","data":{"command":"reboot","ok":true,"reason":null}}
 ```
 
 Cooldown: **30s**.
@@ -702,12 +775,12 @@ Same as reboot.
 
 Example request:
 ```json
-{"confirm": true}
+{"payload":{},"confirm":true}
 ```
 
 Example response:
 ```json
-{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"data":{"command":"shutdown","ok":true,"reason":null}}
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"system","data":{"command":"shutdown","ok":true,"reason":null}}
 ```
 
 ---
@@ -992,6 +1065,82 @@ Command:
 curl -X POST http://127.0.0.1:8001/api/v1/vrx/tune \
   -H "Content-Type: application/json" \
   -d '{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}'
+```
+
+---
+
+## ✅ Complete Verification (copy/paste)
+
+### 1) REST baseline (local)
+```bash
+curl -sS http://127.0.0.1:8001/api/v1/health
+curl -sS http://127.0.0.1:8001/api/v1/status
+curl -sS http://127.0.0.1:8001/api/v1/contacts
+```
+
+### 2) REST baseline (public)
+```bash
+curl -sS https://n.flyspark.in/api/v1/health
+curl -sS https://n.flyspark.in/api/v1/status
+curl -sS https://n.flyspark.in/api/v1/contacts
+```
+
+### 3) WS liveness (≥3 messages / 10s)
+```bash
+python3 tools/validate_contract.py --local http://127.0.0.1:8001/api/v1 --ws-seconds 10
+python3 tools/validate_contract.py --public https://n.flyspark.in/api/v1 --ws-seconds 10
+```
+
+### 4) TX tests (commands)
+```bash
+curl -sS -X POST http://127.0.0.1:8001/api/v1/scan/start \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"dwell_ms":50,"step_hz":2000000,"start_hz":5725000000,"stop_hz":5885000000},"confirm":false}'
+
+curl -sS -X POST http://127.0.0.1:8001/api/v1/scan/stop \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{},"confirm":false}'
+
+curl -sS -X POST http://127.0.0.1:8001/api/v1/vrx/tune \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}'
+
+curl -sS -X POST http://127.0.0.1:8001/api/v1/video/select \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"ch":1},"confirm":false}'
+```
+
+### 5) Dangerous commands (local only)
+```bash
+curl -sS -X POST http://127.0.0.1:8001/api/v1/system/reboot \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{},"confirm":true}'
+
+curl -sS -X POST http://127.0.0.1:8001/api/v1/system/shutdown \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{},"confirm":true}'
+```
+
+### 6) RX checks (status + WS)
+```bash
+curl -sS http://127.0.0.1:8001/api/v1/status | jq '.vrx,.fpv,.video,.rf,.remote_id'
+python3 examples/ws_client.py --url ws://127.0.0.1:8001/api/v1/ws
+```
+
+### 7) RF scan checks (if AntSDR enabled)
+```bash
+curl -sS http://127.0.0.1:8001/api/v1/rf
+curl -sS http://127.0.0.1:8001/api/v1/contacts
+```
+
+### 8) RemoteID checks (if engine enabled)
+```bash
+curl -sS http://127.0.0.1:8001/api/v1/status | jq '.remote_id'
+```
+
+### 9) UPS/power checks (if UPS present)
+```bash
+curl -sS http://127.0.0.1:8001/api/v1/power
 ```
 
 ---

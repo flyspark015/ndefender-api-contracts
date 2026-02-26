@@ -52,6 +52,9 @@ Exits non-zero if required fields are missing or WS has <3 messages.
 ## CONTRACT GAP
 - WS `HEARTBEAT` is emitted by runtime but not yet formalized. See `docs/CONTRACT_GAPS.md`.
 
+## See Also (Canonical)
+- `docs/ALL_IN_ONE_API.md` → **Command System (WRITE APIs)** and **Complete Verification (copy/paste)** sections.
+
 ## Diagnostics (Operational)
 ```bash
 systemctl status ndefender-backend-aggregator --no-pager | sed -n '1,25p'

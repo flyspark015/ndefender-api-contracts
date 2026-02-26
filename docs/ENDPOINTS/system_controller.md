@@ -73,7 +73,7 @@ Errors: `500`
 **Purpose**: restart a named service (dangerous, rate-limited).
 Request:
 ```json
-{"confirm":true}
+{"payload":{},"confirm":true}
 ```
 
 Response (200): `COMMAND_ACK` envelope.
@@ -89,7 +89,7 @@ Rate limits:
 Requires `confirm=true` and unsafe enabled.
 Request:
 ```json
-{"confirm":true}
+{"payload":{},"confirm":true}
 ```
 
 Errors: `400`, `403`, `429`, `500`
@@ -99,7 +99,7 @@ Errors: `400`, `403`, `429`, `500`
 Requires `confirm=true` and unsafe enabled.
 Request:
 ```json
-{"confirm":true}
+{"payload":{},"confirm":true}
 ```
 
 Errors: `400`, `403`, `429`, `500`
@@ -118,13 +118,13 @@ curl -sS $BASE_URL/audio
 
 curl -sS -X POST $BASE_URL/services/ndefender-backend/restart \
   -H "Content-Type: application/json" \
-  -d '{"confirm":true}'
+  -d '{"payload":{},"confirm":true}'
 
 curl -sS -X POST $BASE_URL/system/reboot \
   -H "Content-Type: application/json" \
-  -d '{"confirm":true}'
+  -d '{"payload":{},"confirm":true}'
 
 curl -sS -X POST $BASE_URL/system/shutdown \
   -H "Content-Type: application/json" \
-  -d '{"confirm":true}'
+  -d '{"payload":{},"confirm":true}'
 ```

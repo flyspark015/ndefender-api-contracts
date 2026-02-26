@@ -114,9 +114,11 @@ Emitted by ESP32 serial ingest and System Controller commands.
   "type": "COMMAND_ACK",
   "timestamp_ms": 1700000000000,
   "source": "esp32",
-  "data": {"id":"123","ok":true,"err":null,"data":{"cmd":"SET_VRX_FREQ"}}
+  "data": {"id":"uuid","ok":true,"err":null,"data":{"cmd":"vrx/tune"}}
 }
 ```
+Notes:
+- For ESP32 ACKs, `data.id` should match the REST `command_id` when available.
 
 ### ESP32_TELEMETRY
 ESP32 telemetry passthrough.

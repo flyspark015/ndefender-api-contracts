@@ -154,7 +154,7 @@ Payload:
 - `vrx_id` integer
 - `freq_hz` integer (Hz)
 
-Errors: `403`, `429`, `500`
+Errors: `400`, `403`, `429`, `500`
 
 ### POST /scan/start
 **Purpose**: start RF scan sweep.
@@ -164,21 +164,21 @@ Payload:
 - `start_hz` integer
 - `stop_hz` integer
 
-Errors: `403`, `429`, `500`
+Errors: `400`, `403`, `409`, `429`, `500`
 
 ### POST /scan/stop
 **Purpose**: stop RF scan.
 Payload:
 - empty `{}`
 
-Errors: `403`, `429`, `500`
+Errors: `400`, `403`, `409`, `429`, `500`
 
 ### POST /video/select
 **Purpose**: select active video channel.
 Payload:
 - `ch` integer
 
-Errors: `403`, `429`, `500`
+Errors: `400`, `403`, `429`, `500`
 
 ### POST /system/reboot
 **Purpose**: reboot host (dangerous).
