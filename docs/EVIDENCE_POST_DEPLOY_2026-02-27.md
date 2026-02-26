@@ -856,6 +856,16 @@ origin	git@github.com:flyspark015/ndefender-esp32-panel.git (push)
 - legacy 8000 exposure removed: FAIL (pre-hardening)
 
 ## Step K — Legacy Flask Hardening (Port 8000)
+Pre-hardening identification:
+```text
+$ ss -lntp | grep ':8000'
+LISTEN 0      128                        0.0.0.0:8000       0.0.0.0:*    users:(("python",pid=1151,fd=11))
+
+$ ps -fp 1151
+UID          PID    PPID  C STIME TTY          TIME CMD
+toybook     1151       1  3 Feb26 ?        00:52:17 /opt/ndefender/backend/venv/bin/python -u /opt/ndefender/backend/app.py
+```
+
 Executed:
 - sudo systemctl stop ndefender-backend
 - sudo systemctl disable ndefender-backend
