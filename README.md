@@ -5,6 +5,12 @@ Single source of truth for N-Defender REST + WebSocket contracts, schemas, OpenA
 ## Canonical Contract
 - `docs/ALL_IN_ONE_API.md`
 
+## Entry Points
+- Start here: `docs/ALL_IN_ONE_API.md`
+- Quickstart: `docs/QUICKSTART.md`
+- Endpoints: `docs/ENDPOINTS/`
+- Models: `docs/MODELS/`
+
 ## Docs Map
 - `docs/QUICKSTART.md`
 - `docs/ERROR_MODEL.md`

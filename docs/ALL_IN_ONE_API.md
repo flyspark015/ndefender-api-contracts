@@ -410,7 +410,7 @@ Example `COMMAND_ACK` (ESP32 source):
     "id":"uuid",
     "ok":true,
     "err":null,
-    "data":{"cmd":"SET_VRX_FREQ"}
+    "data":{"cmd":"vrx/tune"}
   }
 }
 ```
@@ -1141,6 +1141,13 @@ curl -sS http://127.0.0.1:8001/api/v1/status | jq '.remote_id'
 ### 9) UPS/power checks (if UPS present)
 ```bash
 curl -sS http://127.0.0.1:8001/api/v1/power
+```
+
+### 10) Service restart (System Controller)
+```bash
+curl -sS -X POST http://127.0.0.1:8002/api/v1/services/ndefender-backend/restart \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{},"confirm":true}'
 ```
 
 ---

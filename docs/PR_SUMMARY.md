@@ -5,6 +5,7 @@
 - Hardened endpoint and model docs with purposes, errors, and curl examples.
 - Added strict contract validator: `tools/validate_contract.py`.
 - Documented known contract gaps and migration plans.
+- Added full command system documentation and complete verification steps in `docs/ALL_IN_ONE_API.md`.
 
 ## Why this is correct
 - All files now align to the canonical contract in `docs/ALL_IN_ONE_API.md`.
