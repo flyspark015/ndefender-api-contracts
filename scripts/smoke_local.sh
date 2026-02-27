@@ -16,13 +16,12 @@ else
 fi
 
 status_json=$(curl -fsS "$BASE/status")
-python3 - <<'PY' <<EOF_JSON
+python3 - <<'PY' <<<"$status_json"
 import json,sys
 j=json.load(sys.stdin)
 assert "timestamp_ms" in j, "timestamp_ms missing"
 print("status ok: timestamp_ms present")
 PY
-EOF_JSON
 
 curl -fsS "$BASE/health" >/dev/null
 curl -fsS "$BASE/contacts" >/dev/null || true
