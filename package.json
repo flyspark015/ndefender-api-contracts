@@ -8,7 +8,9 @@
     "ci:schemas": "python3 ci/check_schemas.py",
     "ci:openapi": "python3 ci/check_openapi.py",
     "ci:readme-openapi": "python3 ci/check_readme_openapi_sync.py",
-    "ci": "npm run ci:links && npm run ci:schemas && npm run ci:openapi && npm run ci:readme-openapi && npm run typecheck"
+    "ci:readme-examples": "python3 ci/readme_examples_lint.py",
+    "ci:validate": "bash scripts/validate.sh",
+    "ci": "npm run ci:links && npm run ci:schemas && npm run ci:openapi && npm run ci:readme-openapi && npm run ci:readme-examples && npm run typecheck && npm run ci:validate"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

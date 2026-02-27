@@ -8,10 +8,9 @@ LOCAL_BASE="${LOCAL_BASE:-http://127.0.0.1:8001/api/v1}"
 PUBLIC_BASE="${PUBLIC_BASE:-}"
 WS_SECONDS="${WS_SECONDS:-10}"
 
-if command -v npm >/dev/null 2>&1; then
-  npm run ci
-else
-  echo "npm not found; skipping npm run ci" >&2
+if [[ "${SKIP_VALIDATE:-0}" == "1" ]]; then
+  echo "SKIP_VALIDATE=1 set; skipping runtime validation"
+  exit 0
 fi
 
 python3 tools/validate_contract.py --local "$LOCAL_BASE" --ws-seconds "$WS_SECONDS"
