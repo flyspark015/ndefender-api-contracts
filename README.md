@@ -2839,7 +2839,7 @@ curl -sS -X POST $BASE/audio/mute -H 'Content-Type: application/json' -d '{"payl
 Response:
 ```json
 {
-  "command": "system-controller/audio/mute",
+  "command": "audio/mute",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -2878,7 +2878,7 @@ curl -sS -X POST $BASE/audio/volume -H 'Content-Type: application/json' -d '{"pa
 Response:
 ```json
 {
-  "command": "system-controller/audio/volume",
+  "command": "audio/volume",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -2915,7 +2915,7 @@ curl -sS -X POST $BASE/gps/restart -H 'Content-Type: application/json' -d '{"pay
 Response:
 ```json
 {
-  "command": "system-controller/gps/restart",
+  "command": "gps/restart",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -2952,7 +2952,7 @@ curl -sS -X POST $BASE/network/bluetooth/disable -H 'Content-Type: application/j
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/disable",
+  "command": "network/bluetooth/disable",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -2991,7 +2991,7 @@ curl -sS -X POST $BASE/network/bluetooth/enable -H 'Content-Type: application/js
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/enable",
+  "command": "network/bluetooth/enable",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3031,7 +3031,7 @@ curl -sS -X POST $BASE/network/bluetooth/pair -H 'Content-Type: application/json
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/pair",
+  "command": "network/bluetooth/pair",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3068,7 +3068,7 @@ curl -sS -X POST $BASE/network/bluetooth/scan/start -H 'Content-Type: applicatio
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/scan/start",
+  "command": "network/bluetooth/scan/start",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3105,7 +3105,7 @@ curl -sS -X POST $BASE/network/bluetooth/scan/stop -H 'Content-Type: application
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/scan/stop",
+  "command": "network/bluetooth/scan/stop",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3144,7 +3144,7 @@ curl -sS -X POST $BASE/network/bluetooth/unpair -H 'Content-Type: application/js
 Response:
 ```json
 {
-  "command": "system-controller/network/bluetooth/unpair",
+  "command": "network/bluetooth/unpair",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3184,7 +3184,7 @@ curl -sS -X POST $BASE/network/wifi/connect -H 'Content-Type: application/json' 
 Response:
 ```json
 {
-  "command": "system-controller/network/wifi/connect",
+  "command": "network/wifi/connect",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3221,7 +3221,7 @@ curl -sS -X POST $BASE/network/wifi/disable -H 'Content-Type: application/json' 
 Response:
 ```json
 {
-  "command": "system-controller/network/wifi/disable",
+  "command": "network/wifi/disable",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3258,7 +3258,7 @@ curl -sS -X POST $BASE/network/wifi/disconnect -H 'Content-Type: application/jso
 Response:
 ```json
 {
-  "command": "system-controller/network/wifi/disconnect",
+  "command": "network/wifi/disconnect",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3297,7 +3297,7 @@ curl -sS -X POST $BASE/network/wifi/enable -H 'Content-Type: application/json' -
 Response:
 ```json
 {
-  "command": "system-controller/network/wifi/enable",
+  "command": "network/wifi/enable",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3334,7 +3334,7 @@ curl -sS -X POST $BASE/services/{name}/restart -H 'Content-Type: application/jso
 Response:
 ```json
 {
-  "command": "system-controller/services/{name}/restart",
+  "command": "services/{name}/restart",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3371,7 +3371,7 @@ curl -sS -X POST $BASE/system/reboot -H 'Content-Type: application/json' -d '{"p
 Response:
 ```json
 {
-  "command": "system-controller/system/reboot",
+  "command": "system/reboot",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3408,7 +3408,7 @@ curl -sS -X POST $BASE/system/shutdown -H 'Content-Type: application/json' -d '{
 Response:
 ```json
 {
-  "command": "system-controller/system/shutdown",
+  "command": "system/shutdown",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3718,7 +3718,7 @@ curl -sS -X POST $BASE/config/reload -H 'Content-Type: application/json' -d '{"p
 Response:
 ```json
 {
-  "command": "antsdr-scan/config/reload",
+  "command": "config/reload",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3757,7 +3757,7 @@ curl -sS -X POST $BASE/device/calibrate -H 'Content-Type: application/json' -d '
 Response:
 ```json
 {
-  "command": "antsdr-scan/device/calibrate",
+  "command": "device/calibrate",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3794,7 +3794,7 @@ curl -sS -X POST $BASE/device/reset -H 'Content-Type: application/json' -d '{"pa
 Response:
 ```json
 {
-  "command": "antsdr-scan/device/reset",
+  "command": "device/reset",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3833,7 +3833,7 @@ curl -sS -X POST $BASE/gain/set -H 'Content-Type: application/json' -d '{"payloa
 Response:
 ```json
 {
-  "command": "antsdr-scan/gain/set",
+  "command": "gain/set",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3872,7 +3872,7 @@ curl -sS -X POST $BASE/sweep/start -H 'Content-Type: application/json' -d '{"pay
 Response:
 ```json
 {
-  "command": "antsdr-scan/sweep/start",
+  "command": "sweep/start",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
@@ -3909,7 +3909,7 @@ curl -sS -X POST $BASE/sweep/stop -H 'Content-Type: application/json' -d '{"payl
 Response:
 ```json
 {
-  "command": "antsdr-scan/sweep/stop",
+  "command": "sweep/stop",
   "command_id": "uuid",
   "accepted": true,
   "detail": null,
