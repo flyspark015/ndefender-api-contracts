@@ -1,1073 +1,2034 @@
 # N-Defender API Contracts (Single Source of Truth)
 
-This repository is the **canonical contract** for all N-Defender REST + WebSocket APIs (TX/RX), covering:
-- Backend Aggregator (public API)
-- System Controller (local system controls)
-- AntSDR Scan
-- RemoteID Engine
-- Observability
+This repository is the canonical specification for all N-Defender REST + WebSocket APIs, covering backend, system controls, RF scan, RemoteID, firmware integration, UI/UX integration, and AI tooling.
 
 Canonical contract:
 - `docs/ALL_IN_ONE_API.md`
 
-## Architecture (Ports + Services)
+## Architecture Overview
 ```
-                    Public Internet
-                          |
-                          |  https://n.flyspark.in/api/v1
-                          v
-                  +--------------------+
-                  |  Backend Aggregator |
-                  |  FastAPI :8001      |
-                  +--------------------+
-                    |        |       |
-                    |        |       |
-     +--------------+   +----+----+  +-----------------+
-     | System Ctrl  |   | RFScan |  | RemoteID Engine |
-     | FastAPI :8002|   | :8890 |  | (local /api/v1)  |
-     +--------------+   +--------+  +-----------------+
+                     Public Internet
+                            |
+                            |  https://n.flyspark.in/api/v1
+                            v
+                    +----------------------+
+                    | Backend Aggregator   |
+                    | FastAPI :8001        |
+                    +----------------------+
+                       |         |        |
+                       |         |        |
+         +-------------+   +-----+-----+  +--------------------+
+         | System Ctrl |   | RFScan   |  | RemoteID Engine    |
+         | FastAPI:8002|   | :8890    |  | (local /api/v1)    |
+         +-------------+   +----------+  +--------------------+
 
-NOTE: Legacy Flask on :8000 must be OFF (no exposure).
+Legacy Flask on :8000 is removed/disabled (security hardening).
 ```
 
-Service map:
-- Aggregator: `http://127.0.0.1:8001/api/v1` (public: `https://n.flyspark.in/api/v1`)
-- System Controller: `http://127.0.0.1:8002/api/v1`
-- AntSDR Scan: `http://127.0.0.1:8890/api/v1`
-- RemoteID Engine: `http://127.0.0.1:<port>/api/v1` (service-local)
+## Topology and Ports
+- Aggregator API: `http://127.0.0.1:8001/api/v1`
+- System Controller API: `http://127.0.0.1:8002/api/v1`
+- RFScan API: `http://127.0.0.1:8890/api/v1`
+- Legacy Flask `:8000`: removed/disabled (do not use)
 
 ## Contract Rules (Non‑Negotiable)
-- `timestamp_ms` only (epoch milliseconds) everywhere.
-- GPS uses `latitude` / `longitude` (no `lat`/`lng`).
-- Frequencies use `freq_hz` (Hz).
-- Signal is `*_dbm` (dBm).
+- Time fields are milliseconds: `timestamp_ms`, `last_update_ms`.
+- GPS uses `latitude` and `longitude` only.
+- Frequency uses `freq_hz` only.
+- Signal uses `rssi_dbm` (dBm).
 - WS envelope is `{type,timestamp_ms,source,data}`.
-- Errors for FastAPI: `{"detail":"..."}`.
-- Commands: body is `{"payload":{...},"confirm":false}`.
-- Dangerous commands require `confirm=true`.
-- Rate limits: 10/min commands, 2/min dangerous.
+- FastAPI errors are `{"detail":"..."}`.
+- Commands use `{"payload":{...},"confirm":false}`.
+- Dangerous commands require confirm-gating (see TX section).
 
-## Entry Points
-- Canonical contract: `docs/ALL_IN_ONE_API.md`
-- WebSocket catalog: `docs/WEBSOCKET_EVENTS.md`
-- OpenAPI: `docs/OPENAPI.yaml`
-- Models: `docs/MODELS/`
-- Endpoints: `docs/ENDPOINTS/`
-- Schemas: `schemas/`
-- Types: `types/`
-- Docs index: `docs/INDEX.md`
-
-## RX Flows (Status / Telemetry / Contacts)
-1) Call `GET /status` (REST snapshot).
-2) Connect WS `/api/v1/ws`.
-3) Merge incremental WS updates (`SYSTEM_UPDATE`, `CONTACT_*`, `TELEMETRY_UPDATE`).
-4) Reconnect on WS drop and re‑fetch `/status`.
-
-## TX Flows (Commands)
-1) Send command via REST with `{payload, confirm}`.
-2) REST returns `CommandResult` with `command_id`.
-3) WS emits `COMMAND_ACK` with matching correlation key.
-
-## Error Model (FastAPI)
-```json
-{"detail":"<reason>"}
-```
-
-## Examples (Every Endpoint)
-Base URLs used below:
-- `BASE=http://127.0.0.1:8001/api/v1` (Aggregator)
-- `SC=http://127.0.0.1:8002/api/v1` (System Controller)
-- `RF=http://127.0.0.1:8890/api/v1` (AntSDR Scan)
-
-### Backend Aggregator (REST)
-
-#### `GET /health`
+## Quick Start (Local)
+1. REST snapshot:
 ```bash
-curl -sS $BASE/health
+curl -sS http://127.0.0.1:8001/api/v1/status
 ```
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-
-#### `GET /status`
+2. WebSocket:
 ```bash
-curl -sS $BASE/status
+websocat ws://127.0.0.1:8001/api/v1/ws
 ```
-```json
-{"timestamp_ms":1700000000000,"overall_ok":false,"system":{"status":"degraded","uptime_s":1},"power":{"status":"ok","soc_percent":98},"rf":{"status":"offline","last_error":"antsdr_unreachable"},"remote_id":{"state":"degraded","mode":"live","capture_active":true},"vrx":{"selected":1,"scan_state":"idle","sys":{"status":"CONNECTED"},"vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":632}]},"fpv":{"selected":1,"scan_state":"idle","freq_hz":5740000000,"rssi_raw":632},"video":{"selected":1,"status":"ok"},"services":[{"name":"ndefender-backend","active_state":"active","sub_state":"running","restart_count":0}],"network":{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}},"gps":{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"},"esp32":{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000},"antsdr":{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"},"audio":{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100},"contacts":[],"replay":{"active":false,"source":"none"}}
-```
-
-#### `GET /contacts`
+3. Smoke checks:
 ```bash
-curl -sS $BASE/contacts
-```
-```json
-{"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1700000000000,"severity":"unknown","vrx_id":1,"freq_hz":5740000000,"rssi_raw":632,"selected":1}]}
+scripts/smoke_local.sh
 ```
 
-#### `GET /system`
+## Validation
+- Full contract validation:
 ```bash
-curl -sS $BASE/system
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671,"version":{"app":"ndefender-backend-aggregator","git_sha":"dev","build_ts":1700000000000}}
+scripts/validate.sh
 ```
 
-#### `GET /power`
-```bash
-curl -sS $BASE/power
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","pack_voltage_v":16.6,"current_a":-0.01,"soc_percent":98}
-```
+## API Index (Strict, CI‑checked)
+The list below must exactly match OpenAPI paths. Do not edit without updating OpenAPI.
 
-#### `GET /rf`
-```bash
-curl -sS $BASE/rf
-```
-```json
-{"status":"offline","scan_active":false,"last_error":"antsdr_unreachable","last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1700000000000}
-```
+<!-- API_INDEX_START -->
+- GET /api/v1/antsdr
+- GET /api/v1/antsdr/gain
+- GET /api/v1/antsdr/stats
+- GET /api/v1/antsdr/sweep/state
+- GET /api/v1/antsdr-scan/config
+- GET /api/v1/antsdr-scan/device
+- GET /api/v1/antsdr-scan/events/last
+- GET /api/v1/antsdr-scan/gain
+- GET /api/v1/antsdr-scan/health
+- GET /api/v1/antsdr-scan/stats
+- GET /api/v1/antsdr-scan/sweep/state
+- GET /api/v1/antsdr-scan/version
+- GET /api/v1/audio
+- GET /api/v1/contacts
+- GET /api/v1/esp32
+- GET /api/v1/esp32/config
+- GET /api/v1/gps
+- GET /api/v1/health
+- GET /api/v1/network
+- GET /api/v1/network/bluetooth/devices
+- GET /api/v1/network/bluetooth/state
+- GET /api/v1/network/wifi/scan
+- GET /api/v1/network/wifi/state
+- GET /api/v1/observability/config
+- GET /api/v1/observability/health
+- GET /api/v1/observability/health/detail
+- GET /api/v1/observability/status
+- GET /api/v1/observability/version
+- GET /api/v1/power
+- GET /api/v1/remote_id
+- GET /api/v1/remote_id/contacts
+- GET /api/v1/remote_id/stats
+- GET /api/v1/remoteid-engine/contacts
+- GET /api/v1/remoteid-engine/health
+- GET /api/v1/remoteid-engine/replay/state
+- GET /api/v1/remoteid-engine/stats
+- GET /api/v1/remoteid-engine/status
+- GET /api/v1/rf
+- GET /api/v1/services
+- GET /api/v1/status
+- GET /api/v1/system
+- GET /api/v1/system-controller/audio
+- GET /api/v1/system-controller/gps
+- GET /api/v1/system-controller/health
+- GET /api/v1/system-controller/network
+- GET /api/v1/system-controller/network/bluetooth/devices
+- GET /api/v1/system-controller/network/bluetooth/state
+- GET /api/v1/system-controller/network/wifi/scan
+- GET /api/v1/system-controller/network/wifi/state
+- GET /api/v1/system-controller/services
+- GET /api/v1/system-controller/status
+- GET /api/v1/system-controller/system
+- GET /api/v1/system-controller/ups
+- GET /api/v1/system-controller/ws
+- GET /api/v1/video
+- GET /api/v1/ws
+- POST /api/v1/antsdr/device/reset
+- POST /api/v1/antsdr/gain/set
+- POST /api/v1/antsdr/sweep/start
+- POST /api/v1/antsdr/sweep/stop
+- POST /api/v1/antsdr-scan/config/reload
+- POST /api/v1/antsdr-scan/device/calibrate
+- POST /api/v1/antsdr-scan/device/reset
+- POST /api/v1/antsdr-scan/gain/set
+- POST /api/v1/antsdr-scan/sweep/start
+- POST /api/v1/antsdr-scan/sweep/stop
+- POST /api/v1/audio/mute
+- POST /api/v1/audio/volume
+- POST /api/v1/esp32/buttons/simulate
+- POST /api/v1/esp32/buzzer
+- POST /api/v1/esp32/config
+- POST /api/v1/esp32/leds
+- POST /api/v1/gps/restart
+- POST /api/v1/network/bluetooth/disable
+- POST /api/v1/network/bluetooth/enable
+- POST /api/v1/network/bluetooth/pair
+- POST /api/v1/network/bluetooth/scan/start
+- POST /api/v1/network/bluetooth/scan/stop
+- POST /api/v1/network/bluetooth/unpair
+- POST /api/v1/network/wifi/connect
+- POST /api/v1/network/wifi/disable
+- POST /api/v1/network/wifi/disconnect
+- POST /api/v1/network/wifi/enable
+- POST /api/v1/observability/diag/bundle
+- POST /api/v1/remote_id/monitor/start
+- POST /api/v1/remote_id/monitor/stop
+- POST /api/v1/remoteid-engine/monitor/start
+- POST /api/v1/remoteid-engine/monitor/stop
+- POST /api/v1/remoteid-engine/replay/start
+- POST /api/v1/remoteid-engine/replay/stop
+- POST /api/v1/scan/start
+- POST /api/v1/scan/stop
+- POST /api/v1/system-controller/audio/mute
+- POST /api/v1/system-controller/audio/volume
+- POST /api/v1/system-controller/gps/restart
+- POST /api/v1/system-controller/network/bluetooth/disable
+- POST /api/v1/system-controller/network/bluetooth/enable
+- POST /api/v1/system-controller/network/bluetooth/pair
+- POST /api/v1/system-controller/network/bluetooth/scan/start
+- POST /api/v1/system-controller/network/bluetooth/scan/stop
+- POST /api/v1/system-controller/network/bluetooth/unpair
+- POST /api/v1/system-controller/network/wifi/connect
+- POST /api/v1/system-controller/network/wifi/disable
+- POST /api/v1/system-controller/network/wifi/disconnect
+- POST /api/v1/system-controller/network/wifi/enable
+- POST /api/v1/system-controller/services/{name}/restart
+- POST /api/v1/system-controller/system/reboot
+- POST /api/v1/system-controller/system/shutdown
+- POST /api/v1/system/reboot
+- POST /api/v1/system/shutdown
+- POST /api/v1/video/select
+- POST /api/v1/vrx/tune
+<!-- API_INDEX_END -->
 
-#### `GET /video`
-```bash
-curl -sS $BASE/video
-```
-```json
-{"selected":1,"status":"ok"}
-```
-
-#### `GET /services`
-```bash
-curl -sS $BASE/services
-```
-```json
-[{"name":"ndefender-backend","active_state":"active","sub_state":"running","restart_count":0}]
-```
-
-#### `GET /network` (summary)
-```bash
-curl -sS $BASE/network
-```
-```json
-{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
-```
-
-#### `GET /network/wifi/state`
-```bash
-curl -sS $BASE/network/wifi/state
-```
-```json
-{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
-```
-
-#### `GET /network/wifi/scan`
-```bash
-curl -sS $BASE/network/wifi/scan
-```
-```json
-{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
-```
-
-#### `GET /network/bluetooth/state`
-```bash
-curl -sS $BASE/network/bluetooth/state
-```
-```json
-{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
-```
-
-#### `GET /network/bluetooth/devices`
-```bash
-curl -sS $BASE/network/bluetooth/devices
-```
-```json
-{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
-```
-
-#### `GET /audio`
-```bash
-curl -sS $BASE/audio
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
-```
-
-#### `GET /gps`
-```bash
-curl -sS $BASE/gps
-```
-```json
-{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"}
-```
-
-#### `GET /esp32`
-```bash
-curl -sS $BASE/esp32
-```
-```json
-{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000,"heartbeat":{"ok":true,"interval_ms":1000,"last_heartbeat_ms":1700000000000},"capabilities":{"leds":true,"vrx":true,"video_switch":true}}
-```
-
-#### `GET /esp32/config`
-```bash
-curl -sS $BASE/esp32/config
-```
-```json
-{"timestamp_ms":1700000000000,"config":{"vrx_default_id":1},"schema_version":"1"}
-```
-
-#### `GET /antsdr`
-```bash
-curl -sS $BASE/antsdr
-```
-```json
-{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"}
-```
-
-#### `GET /antsdr/sweep/state`
-```bash
-curl -sS $BASE/antsdr/sweep/state
-```
-```json
-{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
-```
-
-#### `GET /antsdr/gain`
-```bash
-curl -sS $BASE/antsdr/gain
-```
-```json
-{"timestamp_ms":1700000000000,"mode":"auto"}
-```
-
-#### `GET /antsdr/stats`
-```bash
-curl -sS $BASE/antsdr/stats
-```
-```json
-{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
-```
-
-#### `GET /remote_id`
-```bash
-curl -sS $BASE/remote_id
-```
-```json
-{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
-```
-
-#### `GET /remote_id/contacts`
-```bash
-curl -sS $BASE/remote_id/contacts
-```
-```json
-{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
-```
-
-#### `GET /remote_id/stats`
-```bash
-curl -sS $BASE/remote_id/stats
-```
-```json
-{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
-```
-
-### Backend Aggregator (Commands)
-All commands accept:
+## TX Commands (Confirm‑Gating + Rate Limits)
+All command endpoints accept:
 ```json
 {"payload":{},"confirm":false}
 ```
-All responses are `CommandResult`:
-```json
-{"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /vrx/tune`
-```bash
-curl -sS -X POST $BASE/vrx/tune -H 'Content-Type: application/json' -d '{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}'
-```
-```json
-{"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /scan/start`
-```bash
-curl -sS -X POST $BASE/scan/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
+All command endpoints return `CommandResult`:
 ```json
 {"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
 ```
 
-#### `POST /scan/stop`
-```bash
-curl -sS -X POST $BASE/scan/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /video/select`
-```bash
-curl -sS -X POST $BASE/video/select -H 'Content-Type: application/json' -d '{"payload":{"sel":1},"confirm":false}'
-```
-```json
-{"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /audio/mute`
-```bash
-curl -sS -X POST $BASE/audio/mute -H 'Content-Type: application/json' -d '{"payload":{"muted":true},"confirm":false}'
-```
-```json
-{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /audio/volume`
-```bash
-curl -sS -X POST $BASE/audio/volume -H 'Content-Type: application/json' -d '{"payload":{"volume_percent":50},"confirm":false}'
-```
-```json
-{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/enable`
-```bash
-curl -sS -X POST $BASE/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload":{"enabled":true},"confirm":false}'
-```
-```json
-{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/disable`
-```bash
-curl -sS -X POST $BASE/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/connect`
-```bash
-curl -sS -X POST $BASE/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload":{"ssid":"lab","password":"secret"},"confirm":false}'
-```
-```json
-{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/disconnect`
-```bash
-curl -sS -X POST $BASE/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/enable`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload":{"enabled":true},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/disable`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/scan/start`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/scan/stop`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/pair`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/unpair`
-```bash
-curl -sS -X POST $BASE/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /gps/restart`
-```bash
-curl -sS -X POST $BASE/gps/restart -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /esp32/buzzer`
-```bash
-curl -sS -X POST $BASE/esp32/buzzer -H 'Content-Type: application/json' -d '{"payload":{"mode":"beep","duration_ms":250},"confirm":false}'
-```
-```json
-{"command":"esp32/buzzer","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /esp32/leds`
-```bash
-curl -sS -X POST $BASE/esp32/leds -H 'Content-Type: application/json' -d '{"payload":{"red":true,"green":false,"yellow":false},"confirm":false}'
-```
-```json
-{"command":"esp32/leds","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /esp32/buttons/simulate`
-```bash
-curl -sS -X POST $BASE/esp32/buttons/simulate -H 'Content-Type: application/json' -d '{"payload":{"button":"mute","action":"press"},"confirm":false}'
-```
-```json
-{"command":"esp32/buttons/simulate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /esp32/config`
-```bash
-curl -sS -X POST $BASE/esp32/config -H 'Content-Type: application/json' -d '{"payload":{"config":{"vrx_default_id":1}},"confirm":false}'
-```
-```json
-{"command":"esp32/config","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /antsdr/sweep/start`
-```bash
-curl -sS -X POST $BASE/antsdr/sweep/start -H 'Content-Type: application/json' -d '{"payload":{"plan":"default"},"confirm":false}'
-```
-```json
-{"command":"antsdr/sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /antsdr/sweep/stop`
-```bash
-curl -sS -X POST $BASE/antsdr/sweep/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"antsdr/sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /antsdr/gain/set`
-```bash
-curl -sS -X POST $BASE/antsdr/gain/set -H 'Content-Type: application/json' -d '{"payload":{"mode":"auto"},"confirm":false}'
-```
-```json
-{"command":"antsdr/gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /antsdr/device/reset` (dangerous)
-```bash
-curl -sS -X POST $BASE/antsdr/device/reset -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"antsdr/device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /remote_id/monitor/start`
-```bash
-curl -sS -X POST $BASE/remote_id/monitor/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"remote_id/monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /remote_id/monitor/stop`
-```bash
-curl -sS -X POST $BASE/remote_id/monitor/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"remote_id/monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /system/reboot` (dangerous)
-```bash
-curl -sS -X POST $BASE/system/reboot -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /system/shutdown` (dangerous)
-```bash
-curl -sS -X POST $BASE/system/shutdown -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-### System Controller (REST)
-
-#### `GET /health`
-```bash
-curl -sS $SC/health
-```
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-
-#### `GET /status`
-```bash
-curl -sS $SC/status
-```
-```json
-{"timestamp_ms":1700000000000,"system":{"status":"ok"},"ups":{"status":"ok"},"services":[],"network":{},"audio":{}}
-```
-
-#### `GET /system`
-```bash
-curl -sS $SC/system
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671}
-```
-
-#### `GET /ups`
-```bash
-curl -sS $SC/ups
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}
-```
-
-#### `GET /services`
-```bash
-curl -sS $SC/services
-```
-```json
-[{"name":"gpsd","active_state":"active","sub_state":"running","restart_count":0}]
-```
-
-#### `GET /network` (summary)
-```bash
-curl -sS $SC/network
-```
-```json
-{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
-```
-
-#### `GET /network/wifi/state`
-```bash
-curl -sS $SC/network/wifi/state
-```
-```json
-{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
-```
-
-#### `GET /network/wifi/scan`
-```bash
-curl -sS $SC/network/wifi/scan
-```
-```json
-{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
-```
-
-#### `GET /network/bluetooth/state`
-```bash
-curl -sS $SC/network/bluetooth/state
-```
-```json
-{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
-```
-
-#### `GET /network/bluetooth/devices`
-```bash
-curl -sS $SC/network/bluetooth/devices
-```
-```json
-{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
-```
-
-#### `GET /gps`
-```bash
-curl -sS $SC/gps
-```
-```json
-{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"}
-```
-
-#### `GET /audio`
-```bash
-curl -sS $SC/audio
-```
-```json
-{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
-```
-
-### System Controller (Commands)
-
-#### `POST /services/{name}/restart`
-```bash
-curl -sS -X POST $SC/services/gpsd/restart -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"services/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/enable`
-```bash
-curl -sS -X POST $SC/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload":{"enabled":true},"confirm":false}'
-```
-```json
-{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/disable`
-```bash
-curl -sS -X POST $SC/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/connect`
-```bash
-curl -sS -X POST $SC/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload":{"ssid":"lab","password":"secret"},"confirm":false}'
-```
-```json
-{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/wifi/disconnect`
-```bash
-curl -sS -X POST $SC/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/enable`
-```bash
-curl -sS -X POST $SC/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload":{"enabled":true},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/disable`
-```bash
-curl -sS -X POST $SC/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/scan/start`
-```bash
-curl -sS -X POST $SC/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/scan/stop`
-```bash
-curl -sS -X POST $SC/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/pair`
-```bash
-curl -sS -X POST $SC/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /network/bluetooth/unpair`
-```bash
-curl -sS -X POST $SC/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}'
-```
-```json
-{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /gps/restart`
-```bash
-curl -sS -X POST $SC/gps/restart -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /audio/mute`
-```bash
-curl -sS -X POST $SC/audio/mute -H 'Content-Type: application/json' -d '{"payload":{"muted":true},"confirm":false}'
-```
-```json
-{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /audio/volume`
-```bash
-curl -sS -X POST $SC/audio/volume -H 'Content-Type: application/json' -d '{"payload":{"volume_percent":50},"confirm":false}'
-```
-```json
-{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /system/reboot` (dangerous)
-```bash
-curl -sS -X POST $SC/system/reboot -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /system/shutdown` (dangerous)
-```bash
-curl -sS -X POST $SC/system/shutdown -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-### AntSDR Scan (REST)
-
-#### `GET /health`
-```bash
-curl -sS $RF/health
-```
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-
-#### `GET /version`
-```bash
-curl -sS $RF/version
-```
-```json
-{"version":"dev","timestamp_ms":1700000000000}
-```
-
-#### `GET /stats`
-```bash
-curl -sS $RF/stats
-```
-```json
-{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
-```
-
-#### `GET /device`
-```bash
-curl -sS $RF/device
-```
-```json
-{"timestamp_ms":1700000000000,"connected":false,"last_error":"device_not_connected"}
-```
-
-#### `GET /sweep/state`
-```bash
-curl -sS $RF/sweep/state
-```
-```json
-{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
-```
-
-#### `GET /gain`
-```bash
-curl -sS $RF/gain
-```
-```json
-{"timestamp_ms":1700000000000,"mode":"auto"}
-```
-
-#### `GET /config`
-```bash
-curl -sS $RF/config
-```
-```json
-{"timestamp_ms":1700000000000,"output_jsonl":"/opt/ndefender/logs/antsdr_scan.jsonl"}
-```
-
-#### `GET /events/last?limit=1`
-```bash
-curl -sS "$RF/events/last?limit=1"
-```
-```json
-{"timestamp_ms":1700000000000,"events":[{"type":"RF_CONTACT_NEW","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:1","freq_hz":5740000000,"rssi_dbm":-48}}]}
-```
-
-### AntSDR Scan (Commands)
-
-#### `POST /config/reload`
-```bash
-curl -sS -X POST $RF/config/reload -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"config/reload","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /sweep/start`
-```bash
-curl -sS -X POST $RF/sweep/start -H 'Content-Type: application/json' -d '{"payload":{"plan":"default"},"confirm":false}'
-```
-```json
-{"command":"sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /sweep/stop`
-```bash
-curl -sS -X POST $RF/sweep/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /gain/set`
-```bash
-curl -sS -X POST $RF/gain/set -H 'Content-Type: application/json' -d '{"payload":{"mode":"auto"},"confirm":false}'
-```
-```json
-{"command":"gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /device/reset` (dangerous)
-```bash
-curl -sS -X POST $RF/device/reset -H 'Content-Type: application/json' -d '{"payload":{},"confirm":true}'
-```
-```json
-{"command":"device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /device/calibrate` (dangerous)
-```bash
-curl -sS -X POST $RF/device/calibrate -H 'Content-Type: application/json' -d '{"payload":{"kind":"rf_dc"},"confirm":true}'
-```
-```json
-{"command":"device/calibrate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /run/start` (legacy)
-```bash
-curl -sS -X POST $RF/run/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"run/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /run/stop` (legacy)
-```bash
-curl -sS -X POST $RF/run/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"run/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /run/replay` (legacy)
-```bash
-curl -sS -X POST $RF/run/replay -H 'Content-Type: application/json' -d '{"payload":{"source":"file.jsonl"},"confirm":false}'
-```
-```json
-{"command":"run/replay","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-### RemoteID Engine (REST)
-
-Base is service-local `/api/v1`:
-
-#### `GET /health`
-```bash
-curl -sS http://127.0.0.1:<remoteid_port>/api/v1/health
-```
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-
-#### `GET /status`
-```bash
-curl -sS http://127.0.0.1:<remoteid_port>/api/v1/status
-```
-```json
-{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
-```
-
-#### `GET /contacts`
-```bash
-curl -sS http://127.0.0.1:<remoteid_port>/api/v1/contacts
-```
-```json
-{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
-```
-
-#### `GET /stats`
-```bash
-curl -sS http://127.0.0.1:<remoteid_port>/api/v1/stats
-```
-```json
-{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
-```
-
-#### `GET /replay/state`
-```bash
-curl -sS http://127.0.0.1:<remoteid_port>/api/v1/replay/state
-```
-```json
-{"timestamp_ms":1700000000000,"active":false,"source":"none"}
-```
-
-### RemoteID Engine (Commands)
-
-#### `POST /monitor/start`
-```bash
-curl -sS -X POST http://127.0.0.1:<remoteid_port>/api/v1/monitor/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /monitor/stop`
-```bash
-curl -sS -X POST http://127.0.0.1:<remoteid_port>/api/v1/monitor/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /replay/start`
-```bash
-curl -sS -X POST http://127.0.0.1:<remoteid_port>/api/v1/replay/start -H 'Content-Type: application/json' -d '{"payload":{"source":"file.jsonl"},"confirm":false}'
-```
-```json
-{"command":"replay/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-#### `POST /replay/stop`
-```bash
-curl -sS -X POST http://127.0.0.1:<remoteid_port>/api/v1/replay/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-```json
-{"command":"replay/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-### Observability (REST)
-
-#### `GET /health`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/health
-```
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-
-#### `GET /health/detail`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/health/detail
-```
-```json
-{"timestamp_ms":1700000000000,"checks":[]}
-```
-
-#### `GET /status`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/status
-```
-```json
-{"timestamp_ms":1700000000000,"ok":true}
-```
-
-#### `GET /version`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/version
-```
+Confirm‑gating rules:
+- Dangerous commands require `confirm=true`.
+- First call with `confirm=false` must return HTTP 400:
 ```json
-{"timestamp_ms":1700000000000,"version":"dev"}
+{"detail":"confirm_required"}
 ```
+- Second call with `confirm=true` succeeds.
 
-#### `GET /config`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/config
-```
-```json
-{"timestamp_ms":1700000000000,"profile":"default"}
-```
+Dangerous endpoints:
+- `POST /api/v1/system/reboot`
+- `POST /api/v1/system/shutdown`
+- `POST /api/v1/system-controller/system/reboot`
+- `POST /api/v1/system-controller/system/shutdown`
+- `POST /api/v1/system-controller/services/{name}/restart`
+- `POST /api/v1/antsdr/device/reset`
+- `POST /api/v1/antsdr-scan/device/reset`
+- `POST /api/v1/antsdr-scan/device/calibrate`
 
-#### `GET /metrics`
-```bash
-curl -sS http://127.0.0.1:<obs_port>/api/v1/metrics
-```
-```json
-{"timestamp_ms":1700000000000,"metrics":{}}
-```
+Rate limits:
+- Commands: 10/min
+- Dangerous: 2/min
 
-#### `POST /diag/bundle`
-```bash
-curl -sS -X POST http://127.0.0.1:<obs_port>/api/v1/diag/bundle -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
+## WebSocket (RX Events)
+Envelope:
 ```json
-{"command":"diag/bundle","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-## WebSocket (Aggregator)
-
-Connect:
-```bash
-websocat ws://127.0.0.1:8001/api/v1/ws
+{"type":"EVENT_TYPE","timestamp_ms":1700000000000,"source":"aggregator","data":{}}
 ```
+Liveness requirement: >=3 messages within 10 seconds.
 
-Example envelope:
+### Event Types (Aggregator WS)
+SYSTEM_UPDATE:
 ```json
 {"type":"SYSTEM_UPDATE","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000,"overall_ok":false}}
 ```
-
-COMMAND_ACK example:
+COMMAND_ACK:
 ```json
 {"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"aggregator","data":{"command":"scan/start","command_id":"uuid","ok":true,"detail":null}}
 ```
-
-## How to Run Locally
-```bash
-npm install
-scripts/validate.sh
+HEARTBEAT:
+```json
+{"type":"HEARTBEAT","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000}}
+```
+ESP32_TELEMETRY:
+```json
+{"type":"ESP32_TELEMETRY","timestamp_ms":1700000000000,"source":"esp32","data":{"type":"telemetry","timestamp_ms":1000,"sel":1,"vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":219}],"video":{"selected":1},"led":{"r":0,"y":1,"g":0},"sys":{"uptime_ms":1000,"heap":123456}}}
+```
+LOG_EVENT:
+```json
+{"type":"LOG_EVENT","timestamp_ms":1700000000000,"source":"esp32","data":{"type":"log_event","timestamp_ms":1000,"message":"boot"}}
+```
+CONTACT_NEW / CONTACT_UPDATE / CONTACT_LOST:
+```json
+{"type":"CONTACT_NEW","timestamp_ms":1700000000000,"source":"remoteid","data":{"id":"rid:ABC123","type":"REMOTE_ID","lat":37.42,"lon":-122.08,"last_seen_ts":1700000000000}}
+```
+RF_CONTACT_NEW / RF_CONTACT_UPDATE / RF_CONTACT_LOST:
+```json
+{"type":"RF_CONTACT_UPDATE","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000,"rssi_dbm":-48,"last_seen_ts":1700000000000}}
+```
+TELEMETRY_UPDATE:
+```json
+{"type":"TELEMETRY_UPDATE","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000,"system":{"status":"ok"}}}
+```
+REPLAY_STATE:
+```json
+{"type":"REPLAY_STATE","timestamp_ms":1700000000000,"source":"remoteid","data":{"active":false,"source":"none"}}
 ```
 
-## How to Validate Contracts
-```bash
-scripts/validate.sh
+### Event Types (System Controller WS)
+LOG_EVENT:
+```json
+{"type":"LOG_EVENT","timestamp_ms":1700000000000,"source":"system","data":{"message":"HELLO"}}
+```
+SYSTEM_STATUS:
+```json
+{"type":"SYSTEM_STATUS","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"system":{"status":"ok"}}}
+```
+UPS_UPDATE:
+```json
+{"type":"UPS_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}}
+```
+SERVICE_UPDATE:
+```json
+{"type":"SERVICE_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"name":"gpsd","active_state":"active","sub_state":"running"}}
+```
+NETWORK_UPDATE:
+```json
+{"type":"NETWORK_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"}}}
+```
+AUDIO_UPDATE:
+```json
+{"type":"AUDIO_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"muted":false,"volume_percent":100}}
+```
+COMMAND_ACK:
+```json
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"system","data":{"command":"services/restart","ok":true,"detail":null}}
 ```
 
-## Smoke Tests (curl + websocat)
-Local:
-```bash
-scripts/smoke_local.sh
+### Minimal WebSocket Clients
+JavaScript:
+```js
+const ws = new WebSocket("ws://127.0.0.1:8001/api/v1/ws");
+ws.onmessage = (evt) => console.log(JSON.parse(evt.data));
 ```
-Public:
-```bash
-scripts/smoke_public.sh
+Python:
+```python
+import websocket, json
+ws = websocket.WebSocket()
+ws.connect("ws://127.0.0.1:8001/api/v1/ws")
+print(json.loads(ws.recv()))
 ```
 
-## Integration Steps (UI / AI Tools)
-1) Use `GET /status` to render the initial UI.
-2) Connect WS and merge incremental updates.
-3) Use command endpoints for operator actions and wait for `COMMAND_ACK`.
-4) Use error `detail` to display human‑readable failure reasons.
+## API Reference (REST)
+All examples use:
+- Aggregator: `http://127.0.0.1:8001/api/v1`
+- System Controller: `http://127.0.0.1:8002/api/v1`
+- RFScan: `http://127.0.0.1:8890/api/v1`
 
-## Security Notes
+### Backend Aggregator (Read)
+GET /api/v1/health
+Purpose: health check.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"ok","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/status
+Purpose: full snapshot.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"overall_ok":false,"system":{"status":"degraded"},"power":{"status":"ok","soc_percent":98},"rf":{"status":"offline","last_error":"antsdr_unreachable"},"remote_id":{"state":"degraded","mode":"live","capture_active":true},"vrx":{"selected":1,"scan_state":"idle","sys":{"status":"CONNECTED"},"vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":632}]},"fpv":{"selected":1,"scan_state":"idle","freq_hz":5740000000,"rssi_raw":632},"video":{"selected":1,"status":"ok"},"services":[],"network":{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}},"gps":{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"},"esp32":{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000},"antsdr":{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"},"audio":{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100},"contacts":[],"replay":{"active":false,"source":"none"}}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/contacts
+Purpose: unified contacts list.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1700000000000,"severity":"unknown","vrx_id":1,"freq_hz":5740000000,"rssi_raw":632,"selected":1}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system
+Purpose: system stats summary.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/power
+Purpose: UPS/power snapshot.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/rf
+Purpose: RF scan health snapshot.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"offline","scan_active":false,"last_error":"antsdr_unreachable","last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/video
+Purpose: video selection and health.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"selected":1,"status":"ok"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/services
+Purpose: systemd summary.
+Request:
+```json
+{}
+```
+Success:
+```json
+[{"name":"ndefender-backend","active_state":"active","sub_state":"running","restart_count":0}]
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/network
+Purpose: network summary.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/network/wifi/state
+Purpose: Wi‑Fi state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/network/wifi/scan
+Purpose: Wi‑Fi scan list.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/network/bluetooth/state
+Purpose: Bluetooth state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/network/bluetooth/devices
+Purpose: Bluetooth device list.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/audio
+Purpose: audio state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/gps
+Purpose: GPS state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"latitude":null,"longitude":null,"last_update_ms":1700000000000,"source":"gpsd"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/esp32
+Purpose: ESP32 status.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000,"heartbeat":{"ok":true,"interval_ms":1000,"last_heartbeat_ms":1700000000000},"capabilities":{"leds":true,"vrx":true,"video_switch":true}}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/esp32/config
+Purpose: ESP32 config.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"config":{"vrx_default_id":1},"schema_version":"1"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr
+Purpose: AntSDR summary (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr/sweep/state
+Purpose: AntSDR sweep state (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr/gain
+Purpose: AntSDR gain state (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"mode":"auto"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr/stats
+Purpose: AntSDR stats (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remote_id
+Purpose: RemoteID summary (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remote_id/contacts
+Purpose: RemoteID contacts (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remote_id/stats
+Purpose: RemoteID stats (aggregated).
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/ws
+Purpose: WS upgrade endpoint.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"detail":"upgrade_to_websocket"}
+```
+Errors:
+```json
+{"detail":"bad_request"}
+```
+
+### Backend Aggregator (Write)
+POST /api/v1/vrx/tune
+Purpose: tune VRX.
+Request:
+```json
+{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}
+```
+Success:
+```json
+{"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/scan/start
+Purpose: start scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"rate_limited"}
+```
+
+POST /api/v1/scan/stop
+Purpose: stop scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"rate_limited"}
+```
+
+POST /api/v1/video/select
+Purpose: select video input.
+Request:
+```json
+{"payload":{"sel":1},"confirm":false}
+```
+Success:
+```json
+{"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/audio/mute
+Purpose: mute/unmute.
+Request:
+```json
+{"payload":{"muted":true},"confirm":false}
+```
+Success:
+```json
+{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/audio/volume
+Purpose: set volume.
+Request:
+```json
+{"payload":{"volume_percent":50},"confirm":false}
+```
+Success:
+```json
+{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/wifi/enable
+Purpose: enable Wi‑Fi.
+Request:
+```json
+{"payload":{"enabled":true},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/wifi/disable
+Purpose: disable Wi‑Fi.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/wifi/connect
+Purpose: connect Wi‑Fi.
+Request:
+```json
+{"payload":{"ssid":"lab","password":"secret"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/wifi/disconnect
+Purpose: disconnect Wi‑Fi.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/enable
+Purpose: enable Bluetooth.
+Request:
+```json
+{"payload":{"enabled":true},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/disable
+Purpose: disable Bluetooth.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/scan/start
+Purpose: start BT scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/scan/stop
+Purpose: stop BT scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/pair
+Purpose: pair device.
+Request:
+```json
+{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/network/bluetooth/unpair
+Purpose: unpair device.
+Request:
+```json
+{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/gps/restart
+Purpose: restart GPS (confirm required).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/esp32/buzzer
+Purpose: buzzer control.
+Request:
+```json
+{"payload":{"mode":"beep","duration_ms":250},"confirm":false}
+```
+Success:
+```json
+{"command":"esp32/buzzer","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/esp32/leds
+Purpose: LED control.
+Request:
+```json
+{"payload":{"red":true,"yellow":false,"green":false},"confirm":false}
+```
+Success:
+```json
+{"command":"esp32/leds","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/esp32/buttons/simulate
+Purpose: simulate button (local-only).
+Request:
+```json
+{"payload":{"button":"mute","action":"press"},"confirm":false}
+```
+Success:
+```json
+{"command":"esp32/buttons/simulate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"local_only"}
+```
+
+POST /api/v1/esp32/config
+Purpose: write ESP32 config.
+Request:
+```json
+{"payload":{"config":{"vrx_default_id":1}},"confirm":false}
+```
+Success:
+```json
+{"command":"esp32/config","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr/sweep/start
+Purpose: start AntSDR sweep.
+Request:
+```json
+{"payload":{"plan":"default"},"confirm":false}
+```
+Success:
+```json
+{"command":"antsdr/sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr/sweep/stop
+Purpose: stop AntSDR sweep.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"antsdr/sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr/gain/set
+Purpose: set AntSDR gain.
+Request:
+```json
+{"payload":{"mode":"auto"},"confirm":false}
+```
+Success:
+```json
+{"command":"antsdr/gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr/device/reset
+Purpose: reset AntSDR device (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"antsdr/device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/remote_id/monitor/start
+Purpose: start RemoteID monitor.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"remote_id/monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/remote_id/monitor/stop
+Purpose: stop RemoteID monitor.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"remote_id/monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system/reboot
+Purpose: reboot system (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/system/shutdown
+Purpose: shutdown system (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+### System Controller (Read)
+GET /api/v1/system-controller/health
+Purpose: health check.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"ok","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/status
+Purpose: system-controller snapshot.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"system":{"status":"ok"},"ups":{"status":"ok"},"services":[],"network":{},"audio":{}}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/system
+Purpose: system stats.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/ups
+Purpose: UPS snapshot.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/services
+Purpose: service list.
+Request:
+```json
+{}
+```
+Success:
+```json
+[{"name":"gpsd","active_state":"active","sub_state":"running","restart_count":0}]
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/network
+Purpose: network summary.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/network/wifi/state
+Purpose: Wi‑Fi state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/network/wifi/scan
+Purpose: Wi‑Fi scan list.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/network/bluetooth/state
+Purpose: Bluetooth state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/network/bluetooth/devices
+Purpose: Bluetooth devices.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/gps
+Purpose: GPS state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"latitude":null,"longitude":null,"last_update_ms":1700000000000,"source":"gpsd"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/audio
+Purpose: audio state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/system-controller/ws
+Purpose: WS upgrade for system controller.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"detail":"upgrade_to_websocket"}
+```
+Errors:
+```json
+{"detail":"bad_request"}
+```
+
+### System Controller (Write)
+POST /api/v1/system-controller/services/{name}/restart
+Purpose: restart service (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"services/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/system-controller/network/wifi/enable
+Purpose: enable Wi‑Fi.
+Request:
+```json
+{"payload":{"enabled":true},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/wifi/disable
+Purpose: disable Wi‑Fi.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/wifi/connect
+Purpose: connect Wi‑Fi.
+Request:
+```json
+{"payload":{"ssid":"lab","password":"secret"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/wifi/disconnect
+Purpose: disconnect Wi‑Fi.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/enable
+Purpose: enable Bluetooth.
+Request:
+```json
+{"payload":{"enabled":true},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/disable
+Purpose: disable Bluetooth.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/scan/start
+Purpose: start BT scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/scan/stop
+Purpose: stop BT scan.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/pair
+Purpose: pair device.
+Request:
+```json
+{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/network/bluetooth/unpair
+Purpose: unpair device.
+Request:
+```json
+{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}
+```
+Success:
+```json
+{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/gps/restart
+Purpose: restart GPS (confirm required).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/system-controller/audio/mute
+Purpose: mute/unmute.
+Request:
+```json
+{"payload":{"muted":true},"confirm":false}
+```
+Success:
+```json
+{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/audio/volume
+Purpose: set volume.
+Request:
+```json
+{"payload":{"volume_percent":50},"confirm":false}
+```
+Success:
+```json
+{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/system-controller/system/reboot
+Purpose: reboot system (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/system-controller/system/shutdown
+Purpose: shutdown system (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+### AntSDR Scan (Read)
+GET /api/v1/antsdr-scan/health
+Purpose: RFScan health.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"ok","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/version
+Purpose: RFScan version.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"version":"dev","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/stats
+Purpose: RFScan stats.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/device
+Purpose: RF device status.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"connected":false,"last_error":"device_not_connected"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/sweep/state
+Purpose: sweep state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/gain
+Purpose: gain state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"mode":"auto"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/config
+Purpose: scan config.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"output_jsonl":"/opt/ndefender/logs/antsdr_scan.jsonl"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/antsdr-scan/events/last
+Purpose: last RF events.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"events":[{"type":"RF_CONTACT_NEW","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:1","freq_hz":5740000000,"rssi_dbm":-48}}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+### AntSDR Scan (Write)
+POST /api/v1/antsdr-scan/config/reload
+Purpose: reload config.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"config/reload","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr-scan/sweep/start
+Purpose: start sweep.
+Request:
+```json
+{"payload":{"plan":"default"},"confirm":false}
+```
+Success:
+```json
+{"command":"sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr-scan/sweep/stop
+Purpose: stop sweep.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr-scan/gain/set
+Purpose: set gain.
+Request:
+```json
+{"payload":{"mode":"auto"},"confirm":false}
+```
+Success:
+```json
+{"command":"gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/antsdr-scan/device/reset
+Purpose: reset device (dangerous).
+Request:
+```json
+{"payload":{},"confirm":true}
+```
+Success:
+```json
+{"command":"device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+POST /api/v1/antsdr-scan/device/calibrate
+Purpose: calibrate device (dangerous).
+Request:
+```json
+{"payload":{"kind":"rf_dc"},"confirm":true}
+```
+Success:
+```json
+{"command":"device/calibrate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"confirm_required"}
+```
+
+### RemoteID Engine (Read)
+GET /api/v1/remoteid-engine/health
+Purpose: RemoteID health.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"ok","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remoteid-engine/status
+Purpose: RemoteID status.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remoteid-engine/contacts
+Purpose: RemoteID contacts.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remoteid-engine/stats
+Purpose: RemoteID stats.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/remoteid-engine/replay/state
+Purpose: replay state.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"active":false,"source":"none"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+### RemoteID Engine (Write)
+POST /api/v1/remoteid-engine/monitor/start
+Purpose: start monitor.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/remoteid-engine/monitor/stop
+Purpose: stop monitor.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/remoteid-engine/replay/start
+Purpose: start replay.
+Request:
+```json
+{"payload":{"source":"file.jsonl"},"confirm":false}
+```
+Success:
+```json
+{"command":"replay/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+POST /api/v1/remoteid-engine/replay/stop
+Purpose: stop replay.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"replay/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+### Observability (Read)
+GET /api/v1/observability/health
+Purpose: observability health.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"status":"ok","timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/observability/health/detail
+Purpose: health details.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"checks":[]}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/observability/status
+Purpose: observability status.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"ok":true}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/observability/version
+Purpose: version.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"version":"dev"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+GET /api/v1/observability/config
+Purpose: config.
+Request:
+```json
+{}
+```
+Success:
+```json
+{"timestamp_ms":1700000000000,"profile":"default"}
+```
+Errors:
+```json
+{"detail":"internal_error"}
+```
+
+### Observability (Write)
+POST /api/v1/observability/diag/bundle
+Purpose: create diagnostics bundle.
+Request:
+```json
+{"payload":{},"confirm":false}
+```
+Success:
+```json
+{"command":"diag/bundle","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+```
+Errors:
+```json
+{"detail":"invalid_state"}
+```
+
+## Integration Guide for UI (Figma → UI)
+- Always render the `/status` snapshot first, then merge WS updates.
+- Display units exactly: `freq_hz`, `rssi_dbm`, `timestamp_ms`, `latitude`, `longitude`.
+- Show explicit offline/degraded reasons using `status` and `last_error`.
+- Use reconnect rules: on WS drop, re-fetch `/status`, then reconnect WS.
+- Stale indicators: compare `timestamp_ms` and subsystem `last_update_ms` to wall time.
+- Threat sorting rules: not implemented in contract; UI should preserve API order.
+
+## Integration Guide for AI Tools
+- Use `GET /status` as the primary state snapshot.
+- Use WS `/api/v1/ws` for live updates and correlation of command results.
+- Do not send dangerous commands unless explicitly allowed by the operator.
+- Respect confirm‑gating and rate limits; treat `{"detail":"confirm_required"}` as a hard stop without explicit confirmation.
+
+## Firmware Integration (ESP32 Panel)
+- ESP32 telemetry must align with the WS envelope when proxied.
+- ACK correlation must use `data.id == command_id` for ESP32 commands.
+- Firmware should include uptime telemetry for latency and health checks.
+
+## Data Model / Contracts
+- TypeScript: `packages/contracts-ts/` (alias to `types/`)
+- JSON Schema: `packages/contracts-schema/` (alias to `schemas/`)
+- OpenAPI: `packages/openapi/` (alias to `docs/OPENAPI.yaml`)
+
+## Legacy Paths
+- `/status` and `/ws` are legacy aliases. Canonical paths are `/api/v1/status` and `/api/v1/ws`.
+
+## Tooling
+- List endpoints from OpenAPI and README:
+```bash
+scripts/docs_endpoints.sh
+```
+
+## Security
 - Do not expose legacy Flask on `:8000`.
-- Keep reverse proxy / perimeter controls in front of the Aggregator.
-
-## Docs Structure (Future‑Proof)
-- `docs/INDEX.md` for navigation.
-- `docs/api/`, `docs/contracts/`, `docs/guides/`, `docs/ops/`, `docs/evidence/` are aliases.
-- `packages/` provides future packaging layout.
+- Do not commit tokens or credentialed URLs.
