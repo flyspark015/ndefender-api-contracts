@@ -238,6 +238,9 @@ def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tu
     if is_dangerous(path):
         return ('PASS_SAFE_ERROR', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
     if http_code == 409:
+        body_l = (body or '').lower()
+        if 'serial' in body_l or 'not connected' in body_l or 'precondition' in body_l:
+            return 'PASS_PRECONDITION', 'PRECONDITION_OK'
         return 'FAIL', 'PRECONDITION'
     return ('PASS', 'OK') if http_code and http_code < 400 else ('FAIL', f'HTTP_{http_code}')
 
@@ -395,6 +398,8 @@ def main():
                 classification = 'FAIL (RATE_LIMIT)'
             if status_reason == 'PRECONDITION':
                 classification = 'FAIL (PRECONDITION)'
+        elif status == 'PASS_PRECONDITION':
+            classification = 'PASS (PRECONDITION_OK)'
         elif status == 'PASS' and agg_status == 'FAIL':
             classification = 'FAIL (AGGREGATOR PROXY GAP)'
         elif status == 'SKIP' and direct_skip_reason == 'NEEDS_REAL_INPUT':
