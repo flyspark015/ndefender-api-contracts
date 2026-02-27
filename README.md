@@ -61,6 +61,12 @@ scripts/smoke_local.sh
 scripts/validate.sh
 ```
 
+## Routing Canonicalization
+- OpenAPI paths are **relative** to the server base in `docs/OPENAPI.yaml` (which includes `/api/v1`).
+- README lists **canonical full paths** that include `/api/v1/...`.
+- CI enforces that README canonical paths match OpenAPI canonical paths.
+- Legacy aliases such as `/status` and `/ws` are **backward‑compat only** if they exist on a given deployment.
+
 ## API Index (Strict, CI‑checked)
 The list below must exactly match OpenAPI paths. Do not edit without updating OpenAPI.
 
