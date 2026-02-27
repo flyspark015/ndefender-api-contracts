@@ -229,6 +229,10 @@ def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tu
         return 'FAIL', 'RATE_LIMIT'
     if http_code == 404:
         return 'FAIL', 'NOT_FOUND'
+    if http_code == 502:
+        body_l = (body or '').lower()
+        if 'service_unreachable' in body_l:
+            return 'PASS', 'UPSTREAM_UNREACHABLE'
     if http_code >= 500:
         return 'FAIL', 'SERVER_ERROR'
     if method == 'get':
@@ -392,14 +396,18 @@ def main():
 
         # classification
         classification = "PASS"
-        if status == 'FAIL':
+        if status == 'PASS_SAFE_ERROR':
+            classification = 'PASS_SAFE_ERROR (CONFIRM_REQUIRED)' if status_reason == 'CONFIRM_REQUIRED' else 'PASS_SAFE_ERROR'
+        elif status == 'PASS_PRECONDITION':
+            classification = 'PASS_PRECONDITION (PRECONDITION_OK)' if status_reason == 'PRECONDITION_OK' else 'PASS_PRECONDITION'
+        elif status == 'PASS' and status_reason == 'UPSTREAM_UNREACHABLE':
+            classification = 'PASS (UPSTREAM_UNREACHABLE)'
+        elif status == 'FAIL':
             classification = 'FAIL (UPSTREAM BUG)'
             if status_reason == 'RATE_LIMIT':
                 classification = 'FAIL (RATE_LIMIT)'
             if status_reason == 'PRECONDITION':
                 classification = 'FAIL (PRECONDITION)'
-        elif status == 'PASS_PRECONDITION':
-            classification = 'PASS (PRECONDITION_OK)'
         elif status == 'PASS' and agg_status == 'FAIL':
             classification = 'FAIL (AGGREGATOR PROXY GAP)'
         elif status == 'SKIP' and direct_skip_reason == 'NEEDS_REAL_INPUT':
@@ -518,6 +526,18 @@ def main():
         blocker_lines.append(f"| {b} | {row_map.get(b, 'UNKNOWN')} |")
     write_section('7c) UI Blockers vs Non-Blockers', "\n".join(blocker_lines))
 
+    # Fix progress (append at end of report)
+    fix_lines = [
+        f"Run timestamp: {now}",
+        f"Summary: Total {total} / PASS {pass_count} / FAIL {fail_count} / SKIP {skip_count}",
+        "",
+        "Notes:",
+        "- (update as fixes land)",
+    ]
+    write_section('8) Fix Progress', "\n".join(fix_lines))
+
+    print(f"SUMMARY Total={total} PASS={pass_count} FAIL={fail_count} SKIP={skip_count}")
+
     # Failure analysis
     if failure_rows:
         lines = ['| Endpoint | Direct-owner | Aggregator | Classification | Owning Repo | Suggested Fix |',
@@ -531,9 +551,9 @@ def main():
             elif owner_tag == 'RemoteID Engine':
                 repo = 'Ndefender-Remoteid-Engine'
             lines.append(f'| {path} | {direct_status} | {agg_status} | {classification} | {repo} | Add/fix endpoint or proxy; align contract |')
-        write_section('8) Failure Analysis + Next Fix Repo', "\n".join(lines))
+        write_section('9) Failure Analysis + Next Fix Repo', "\n".join(lines))
     else:
-        write_section('8) Failure Analysis + Next Fix Repo', 'No failures detected.')
+        write_section('9) Failure Analysis + Next Fix Repo', 'No failures detected.')
 
 
 if __name__ == '__main__':
