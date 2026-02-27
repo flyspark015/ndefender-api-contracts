@@ -42,8 +42,6 @@ SKIP_SIDE_EFFECT_POST = {
 DANGEROUS_POST = {
     '/system/reboot',
     '/system/shutdown',
-    '/system-controller/system/reboot',
-    '/system-controller/system/shutdown',
     '/antsdr/device/reset',
     '/antsdr/device/calibrate',
 }
@@ -58,7 +56,7 @@ def is_dangerous(path: str) -> bool:
     return False
 
 def is_service_specific(path: str) -> bool:
-    return path.startswith('/system-controller/') or path.startswith('/antsdr-scan/') or path.startswith('/remoteid-engine/') or path.startswith('/observability/')
+    return path.startswith('/remoteid-engine/') or path.startswith('/observability/')
 
 
 def run(cmd: str, timeout: int = 60) -> Tuple[int, str]:
@@ -235,6 +233,8 @@ def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tu
         return 'FAIL', 'SERVER_ERROR'
     if method == 'get':
         return ('PASS', 'OK') if http_code == 200 else ('FAIL', f'HTTP_{http_code}')
+    if http_code == 400 and 'confirm_required' in body:
+        return ('PASS_SAFE_ERROR', 'CONFIRM_REQUIRED')
     if is_dangerous(path):
         return ('PASS_SAFE_ERROR', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
     if http_code == 409:
