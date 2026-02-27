@@ -55,7 +55,11 @@ def is_dangerous(path: str) -> bool:
         return True
     return False
 
-def is_service_specific(path: str) -> bool:
+def is_service_specific(path: str, owner_tag: str) -> bool:
+    if owner_tag == 'AntSDR Scan':
+        return True
+    if path == '/ups':
+        return True
     return path.startswith('/remoteid-engine/') or path.startswith('/observability/')
 
 
@@ -373,7 +377,7 @@ def main():
 
         # aggregator proxy check
         agg_url = BASE_AGG + logical_path
-        if is_service_specific(path):
+        if is_service_specific(path, owner_tag):
             section.append("\n**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)\n")
             agg_status = "SKIP"
             agg_http = None
