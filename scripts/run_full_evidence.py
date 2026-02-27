@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import json
 import os
+import random
 import re
 import subprocess
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -105,6 +107,16 @@ def detect_rfscan_base() -> str:
     return ''
 
 
+def probe_path(base: str, path: str) -> Tuple[int, str, str]:
+    cmd = f"curl -sS -w '\\nHTTP_STATUS:%{{http_code}}' {base}{path}"
+    code, out = run(cmd, timeout=5)
+    out = redact(out)
+    m = re.search(r"HTTP_STATUS:(\d+)", out)
+    http_code = int(m.group(1)) if m else None
+    body = out.replace(m.group(0), '').strip() if m else out
+    return http_code or 0, body, cmd
+
+
 def owner_base(tags: List[str], path: str, rfscan_base: str) -> str:
     # Determine ownership primarily by OpenAPI tags
     tag = tags[0] if tags else ''
@@ -189,25 +201,45 @@ def default_payload_for(path: str) -> Dict:
 
 
 def curl(method: str, url: str, payload: Dict = None, timeout: int = 30) -> Tuple[int, str, str]:
+    # Throttle between requests to reduce 429s
+    time.sleep(random.uniform(0.15, 0.25))
     if method == 'get':
         cmd = f"curl -sS -w '\\nHTTP_STATUS:%{{http_code}}' {url}"
     else:
         data = json.dumps(payload or {"payload": {}, "confirm": False})
         cmd = f"curl -sS -w '\\nHTTP_STATUS:%{{http_code}}' -X POST {url} -H 'Content-Type: application/json' -d '{data}'"
-    code, out = run(cmd, timeout=timeout)
-    out = redact(out)
-    m = re.search(r"HTTP_STATUS:(\d+)", out)
-    http_code = int(m.group(1)) if m else None
-    body = out.replace(m.group(0), '').strip() if m else out
-    return http_code or 0, body, cmd
+    backoff = [0.5, 1, 2, 4, 8]
+    last_http = 0
+    last_body = ''
+    for attempt in range(0, 1 + len(backoff)):
+        code, out = run(cmd, timeout=timeout)
+        out = redact(out)
+        m = re.search(r"HTTP_STATUS:(\d+)", out)
+        http_code = int(m.group(1)) if m else None
+        body = out.replace(m.group(0), '').strip() if m else out
+        last_http = http_code or 0
+        last_body = body
+        if last_http != 429:
+            break
+        if attempt < len(backoff):
+            time.sleep(backoff[attempt])
+    return last_http, last_body, cmd
 
 
-def result_label_direct(http_code: int, body: str, method: str, path: str) -> str:
+def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tuple[str, str]:
+    if http_code == 429:
+        return 'FAIL', 'RATE_LIMIT'
+    if http_code == 404:
+        return 'FAIL', 'NOT_FOUND'
+    if http_code >= 500:
+        return 'FAIL', 'SERVER_ERROR'
     if method == 'get':
-        return 'PASS' if http_code == 200 else 'FAIL'
+        return ('PASS', 'OK') if http_code == 200 else ('FAIL', f'HTTP_{http_code}')
     if is_dangerous(path):
-        return 'PASS' if http_code == 400 and 'confirm_required' in body else 'FAIL'
-    return 'PASS' if http_code and http_code < 400 else 'FAIL'
+        return ('PASS', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
+    if http_code == 409:
+        return 'FAIL', 'PRECONDITION'
+    return ('PASS', 'OK') if http_code and http_code < 400 else ('FAIL', f'HTTP_{http_code}')
 
 
 def main():
@@ -223,6 +255,7 @@ def main():
         "It also lacked direct-owner comparisons and field-level contract checks for UI readiness, and did not clearly classify gaps as upstream vs proxy."
     )
     write_section('0) What Was Wrong With the Previous Report', what_wrong)
+    write_section('0b) How To Interpret This Report', "This is a contracts/docs repo; all tests are executed against deployed services on the Raspberry Pi. Each endpoint includes a direct-owner check (ground truth) and, when applicable, an Aggregator proxy check. Failures are classified as UPSTREAM BUG, AGGREGATOR PROXY GAP, CONTRACT PATH MISMATCH, or NEEDS REAL INPUT.")
 
     # Baseline snapshot
     baseline_cmds = [
@@ -259,6 +292,31 @@ def main():
     # Endpoint coverage
     endpoints = parse_openapi()
     rfscan_base = detect_rfscan_base()
+    # Namespace probes to reduce noise
+    sc_health_code, sc_health_body, sc_health_cmd = probe_path(BASE_SC, "/health")
+    sc_prefix_code, sc_prefix_body, sc_prefix_cmd = probe_path(BASE_SC, "/system-controller/health")
+    sc_prefix_ok = sc_prefix_code == 200
+    sc_prefix_mismatch = (sc_health_code == 200 and sc_prefix_code == 404)
+
+    rf_health_code, rf_health_body, rf_health_cmd = (0, "", "")
+    rf_stats_code, rf_stats_body, rf_stats_cmd = (0, "", "")
+    rfscan_prefix_code, rfscan_prefix_body, rfscan_prefix_cmd = (0, "", "")
+    if rfscan_base:
+        rf_health_code, rf_health_body, rf_health_cmd = probe_path(rfscan_base, "/health")
+        rf_stats_code, rf_stats_body, rf_stats_cmd = probe_path(rfscan_base, "/stats")
+        rfscan_prefix_code, rfscan_prefix_body, rfscan_prefix_cmd = probe_path(rfscan_base, "/antsdr-scan/health")
+    rfscan_prefix_ok = rfscan_prefix_code == 200
+    rfscan_prefix_mismatch = ((rf_health_code == 200 or rf_stats_code == 200) and rfscan_prefix_code == 404)
+
+    # Namespace probe section
+    probe_section = []
+    probe_section.append(code_block(sc_health_cmd, f"{sc_health_body}\nHTTP_STATUS:{sc_health_code}") + f"\n**Result:** {'PASS' if sc_health_code==200 else 'FAIL'}\n")
+    probe_section.append(code_block(sc_prefix_cmd, f"{sc_prefix_body}\nHTTP_STATUS:{sc_prefix_code}") + f"\n**Result:** {'PASS' if sc_prefix_code==200 else 'FAIL'}\n")
+    if rfscan_base:
+        probe_section.append(code_block(rf_health_cmd, f"{rf_health_body}\nHTTP_STATUS:{rf_health_code}") + f"\n**Result:** {'PASS' if rf_health_code==200 else 'FAIL'}\n")
+        probe_section.append(code_block(rf_stats_cmd, f"{rf_stats_body}\nHTTP_STATUS:{rf_stats_code}") + f"\n**Result:** {'PASS' if rf_stats_code==200 else 'FAIL'}\n")
+        probe_section.append(code_block(rfscan_prefix_cmd, f"{rfscan_prefix_body}\nHTTP_STATUS:{rfscan_prefix_code}") + f"\n**Result:** {'PASS' if rfscan_prefix_code==200 else 'FAIL'}\n")
+    write_section('2b) Namespace Probes', "\n".join(probe_section))
     base_rf = rfscan_base if rfscan_base else BASE_RF_API
     get_endpoints = [e for e in endpoints if e[0] == 'get']
     post_endpoints = [e for e in endpoints if e[0] == 'post']
@@ -281,24 +339,40 @@ def main():
         section = [f"### {method.upper()} {path}", f"**Owner tag:** {owner_tag}", f"**Owner base:** {owner_base_label}"]
 
         # direct-owner check
-        if owner:
+        if path.startswith('/system-controller/') and sc_prefix_mismatch:
+            cmd = sc_prefix_cmd
+            out = sc_prefix_body + f"\nHTTP_STATUS:{sc_prefix_code}"
+            status, status_reason = 'FAIL', 'CONTRACT_PATH_MISMATCH'
+            direct_skip_reason = ''
+            direct_http = sc_prefix_code
+            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status} ({status_reason})\n")
+        elif path.startswith('/antsdr-scan/') and rfscan_prefix_mismatch:
+            cmd = rfscan_prefix_cmd
+            out = rfscan_prefix_body + f"\nHTTP_STATUS:{rfscan_prefix_code}"
+            status, status_reason = 'FAIL', 'CONTRACT_PATH_MISMATCH'
+            direct_skip_reason = ''
+            direct_http = rfscan_prefix_code
+            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status} ({status_reason})\n")
+        elif owner:
             url = owner + logical_path
             if method == 'post' and path in SKIP_SIDE_EFFECT_POST:
                 skip_payload = '{\"payload\":{},\"confirm\":false}'
                 cmd = f"curl -sS -X POST {url} -H 'Content-Type: application/json' -d '{skip_payload}'"
-                out = "SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)"
+                out = "SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)\nHTTP_STATUS:SKIPPED"
                 status = "SKIP"
+                status_reason = "NEEDS_REAL_INPUT"
                 direct_skip_reason = "NEEDS_REAL_INPUT"
                 direct_http = None
             else:
                 http_code, body, cmd = curl(method, url, default_payload_for(path))
-                status = result_label_direct(http_code, body, method, path)
+                status, status_reason = result_label_direct(http_code, body, method, path)
                 out = body + (f"\nHTTP_STATUS:{http_code}" if http_code else '')
                 direct_skip_reason = ""
                 direct_http = http_code
-            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status}\n")
+            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status} ({status_reason})\n")
         else:
             status = "SKIP"
+            status_reason = "OWNER_NOT_EXPOSED"
             direct_http = None
             direct_skip_reason = "OWNER_NOT_EXPOSED"
             section.append("\n**Direct-owner check:**\n\nSKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)\n")
@@ -317,12 +391,12 @@ def main():
             if method == 'post' and path in SKIP_SIDE_EFFECT_POST:
                 skip_payload = '{\"payload\":{},\"confirm\":false}'
                 agg_cmd = f"curl -sS -X POST {agg_url} -H 'Content-Type: application/json' -d '{skip_payload}'"
-                agg_out = "SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)"
+                agg_out = "SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)\nHTTP_STATUS:SKIPPED"
                 agg_status = "SKIP"
                 agg_http = None
             else:
                 agg_http, agg_body, agg_cmd = curl(method, agg_url, default_payload_for(path))
-                agg_status = result_label_direct(agg_http, agg_body, method, path)
+                agg_status, agg_reason = result_label_direct(agg_http, agg_body, method, path)
                 agg_out = agg_body + (f"\nHTTP_STATUS:{agg_http}" if agg_http else '')
             section.append("\n**Aggregator proxy check:**\n\n" + code_block(agg_cmd, agg_out) + f"\n**Result:** {agg_status}\n")
 
@@ -330,6 +404,10 @@ def main():
         classification = "PASS"
         if status == 'FAIL':
             classification = 'FAIL (UPSTREAM BUG)'
+            if status_reason == 'RATE_LIMIT':
+                classification = 'FAIL (RATE_LIMIT)'
+            if status_reason == 'PRECONDITION':
+                classification = 'FAIL (PRECONDITION)'
         elif status == 'PASS' and agg_status == 'FAIL':
             classification = 'FAIL (AGGREGATOR PROXY GAP)'
         elif status == 'SKIP' and direct_skip_reason == 'NEEDS_REAL_INPUT':
@@ -340,6 +418,8 @@ def main():
             classification = 'PASS'
         elif status == 'SKIP' and agg_status == 'SKIP':
             classification = 'SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)'
+        if status == 'FAIL' and status_reason == 'CONTRACT_PATH_MISMATCH':
+            classification = 'FAIL (CONTRACT PATH MISMATCH)'
 
         rows.append((method.upper(), path, classification))
         if classification.startswith('FAIL'):
@@ -403,6 +483,35 @@ def main():
         f'| SKIP | {skip_count} |',
     ]
     write_section('7) Summary Table', "\n".join(summary_table))
+
+    # Top 10 actionable failures
+    top_failures = failure_rows[:10]
+    if top_failures:
+        lines = ['| Endpoint | Classification | Owning Repo | Suggested Fix |',
+                 '|---|---|---|---|']
+        for path, direct_status, agg_status, classification, owner_tag in top_failures:
+            repo = 'ndefender-backend-aggregator'
+            if owner_tag == 'System Controller':
+                repo = 'ndefender-system-controller'
+            elif owner_tag == 'AntSDR Scan':
+                repo = 'ndefender-antsdr-scan'
+            elif owner_tag == 'RemoteID Engine':
+                repo = 'Ndefender-Remoteid-Engine'
+            lines.append(f'| {path} | {classification} | {repo} | Fix endpoint/proxy or align contract |')
+        write_section('7b) Top 10 Actionable Failures', "\n".join(lines))
+
+    # UI blockers vs non-blockers
+    blockers = [
+        '/status', '/ws', '/contacts',
+        '/scan/start', '/scan/stop',
+        '/vrx/tune', '/video/select',
+        '/remote_id/monitor/start', '/remote_id/monitor/stop',
+    ]
+    blocker_lines = ['| Endpoint | Classification |', '|---|---|']
+    row_map = {p: c for _, p, c in rows}
+    for b in blockers:
+        blocker_lines.append(f"| {b} | {row_map.get(b, 'UNKNOWN')} |")
+    write_section('7c) UI Blockers vs Non-Blockers', "\n".join(blocker_lines))
 
     # Failure analysis
     if failure_rows:
