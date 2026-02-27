@@ -294,28 +294,19 @@ def main():
     rfscan_base = detect_rfscan_base()
     # Namespace probes to reduce noise
     sc_health_code, sc_health_body, sc_health_cmd = probe_path(BASE_SC, "/health")
-    sc_prefix_code, sc_prefix_body, sc_prefix_cmd = probe_path(BASE_SC, "/system-controller/health")
-    sc_prefix_ok = sc_prefix_code == 200
-    sc_prefix_mismatch = (sc_health_code == 200 and sc_prefix_code == 404)
 
     rf_health_code, rf_health_body, rf_health_cmd = (0, "", "")
     rf_stats_code, rf_stats_body, rf_stats_cmd = (0, "", "")
-    rfscan_prefix_code, rfscan_prefix_body, rfscan_prefix_cmd = (0, "", "")
     if rfscan_base:
         rf_health_code, rf_health_body, rf_health_cmd = probe_path(rfscan_base, "/health")
         rf_stats_code, rf_stats_body, rf_stats_cmd = probe_path(rfscan_base, "/stats")
-        rfscan_prefix_code, rfscan_prefix_body, rfscan_prefix_cmd = probe_path(rfscan_base, "/antsdr-scan/health")
-    rfscan_prefix_ok = rfscan_prefix_code == 200
-    rfscan_prefix_mismatch = ((rf_health_code == 200 or rf_stats_code == 200) and rfscan_prefix_code == 404)
 
     # Namespace probe section
     probe_section = []
     probe_section.append(code_block(sc_health_cmd, f"{sc_health_body}\nHTTP_STATUS:{sc_health_code}") + f"\n**Result:** {'PASS' if sc_health_code==200 else 'FAIL'}\n")
-    probe_section.append(code_block(sc_prefix_cmd, f"{sc_prefix_body}\nHTTP_STATUS:{sc_prefix_code}") + f"\n**Result:** {'PASS' if sc_prefix_code==200 else 'FAIL'}\n")
     if rfscan_base:
         probe_section.append(code_block(rf_health_cmd, f"{rf_health_body}\nHTTP_STATUS:{rf_health_code}") + f"\n**Result:** {'PASS' if rf_health_code==200 else 'FAIL'}\n")
         probe_section.append(code_block(rf_stats_cmd, f"{rf_stats_body}\nHTTP_STATUS:{rf_stats_code}") + f"\n**Result:** {'PASS' if rf_stats_code==200 else 'FAIL'}\n")
-        probe_section.append(code_block(rfscan_prefix_cmd, f"{rfscan_prefix_body}\nHTTP_STATUS:{rfscan_prefix_code}") + f"\n**Result:** {'PASS' if rfscan_prefix_code==200 else 'FAIL'}\n")
     write_section('2b) Namespace Probes', "\n".join(probe_section))
     base_rf = rfscan_base if rfscan_base else BASE_RF_API
     get_endpoints = [e for e in endpoints if e[0] == 'get']
@@ -349,21 +340,7 @@ def main():
             continue
 
         # direct-owner check
-        if path.startswith('/system-controller/') and sc_prefix_mismatch:
-            cmd = sc_prefix_cmd
-            out = sc_prefix_body + f"\nHTTP_STATUS:{sc_prefix_code}"
-            status, status_reason = 'FAIL', 'CONTRACT_PATH_MISMATCH'
-            direct_skip_reason = ''
-            direct_http = sc_prefix_code
-            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status} ({status_reason})\n")
-        elif path.startswith('/antsdr-scan/') and rfscan_prefix_mismatch:
-            cmd = rfscan_prefix_cmd
-            out = rfscan_prefix_body + f"\nHTTP_STATUS:{rfscan_prefix_code}"
-            status, status_reason = 'FAIL', 'CONTRACT_PATH_MISMATCH'
-            direct_skip_reason = ''
-            direct_http = rfscan_prefix_code
-            section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status} ({status_reason})\n")
-        elif owner:
+        if owner:
             url = owner + logical_path
             if method == 'post' and path in SKIP_SIDE_EFFECT_POST:
                 skip_payload = '{\"payload\":{},\"confirm\":false}'

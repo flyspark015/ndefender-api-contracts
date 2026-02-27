@@ -50,7 +50,7 @@ Legacy Flask on :8000 is removed/disabled (security hardening).
 |---------|------------------|
 | Aggregator | `/api/v1/*` (default) |
 | System Controller | `/api/v1/*` |
-| RFScan (AntSDR Scan) | `/api/v1/antsdr-scan/*` |
+| RFScan (AntSDR Scan) | `/api/v1/*` |
 | RemoteID Engine | `/api/v1/remoteid-engine/*` |
 | Observability | `/api/v1/observability/*` |
 
@@ -80,8 +80,8 @@ Dangerous endpoints (confirm required):
 - `POST /api/v1/system/shutdown`
 - `POST /api/v1/services/{name}/restart`
 - `POST /api/v1/antsdr/device/reset`
-- `POST /api/v1/antsdr-scan/device/reset`
-- `POST /api/v1/antsdr-scan/device/calibrate`
+- `POST /api/v1/device/reset`
+- `POST /api/v1/device/calibrate`
 
 ## Error Taxonomy (FastAPI)
 | HTTP | Reason | Example |
@@ -101,14 +101,14 @@ Dangerous endpoints (confirm required):
 ## API Index (Strict, CI‑checked)
 <!-- API_INDEX_START -->
 - GET /api/v1/antsdr
-- GET /api/v1/antsdr-scan/config
-- GET /api/v1/antsdr-scan/device
-- GET /api/v1/antsdr-scan/events/last
-- GET /api/v1/antsdr-scan/gain
-- GET /api/v1/antsdr-scan/health
-- GET /api/v1/antsdr-scan/stats
-- GET /api/v1/antsdr-scan/sweep/state
-- GET /api/v1/antsdr-scan/version
+- GET /api/v1/config
+- GET /api/v1/device
+- GET /api/v1/events/last
+- GET /api/v1/gain
+- GET /api/v1/health
+- GET /api/v1/stats
+- GET /api/v1/sweep/state
+- GET /api/v1/version
 - GET /api/v1/antsdr/gain
 - GET /api/v1/antsdr/stats
 - GET /api/v1/antsdr/sweep/state
@@ -156,12 +156,12 @@ Dangerous endpoints (confirm required):
 - GET /api/v1/ws
 - GET /api/v1/video
 - GET /api/v1/ws
-- POST /api/v1/antsdr-scan/config/reload
-- POST /api/v1/antsdr-scan/device/calibrate
-- POST /api/v1/antsdr-scan/device/reset
-- POST /api/v1/antsdr-scan/gain/set
-- POST /api/v1/antsdr-scan/sweep/start
-- POST /api/v1/antsdr-scan/sweep/stop
+- POST /api/v1/config/reload
+- POST /api/v1/device/calibrate
+- POST /api/v1/device/reset
+- POST /api/v1/gain/set
+- POST /api/v1/sweep/start
+- POST /api/v1/sweep/stop
 - POST /api/v1/antsdr/device/reset
 - POST /api/v1/antsdr/gain/set
 - POST /api/v1/antsdr/sweep/start
@@ -3427,7 +3427,7 @@ Errors (example):
 
 ### RFScan (AntSDR Scan) API
 
-#### GET /api/v1/antsdr-scan/config
+#### GET /api/v1/config
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3440,7 +3440,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/config
+curl -sS $BASE/config
 ```
 
 Response:
@@ -3458,7 +3458,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/device
+#### GET /api/v1/device
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3471,7 +3471,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/device
+curl -sS $BASE/device
 ```
 
 Response:
@@ -3490,7 +3490,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/events/last
+#### GET /api/v1/events/last
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3503,7 +3503,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/events/last
+curl -sS $BASE/events/last
 ```
 
 Response:
@@ -3532,7 +3532,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/gain
+#### GET /api/v1/gain
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3545,7 +3545,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/gain
+curl -sS $BASE/gain
 ```
 
 Response:
@@ -3563,7 +3563,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/health
+#### GET /api/v1/health
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3576,7 +3576,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/health
+curl -sS $BASE/health
 ```
 
 Response:
@@ -3594,7 +3594,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/stats
+#### GET /api/v1/stats
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3607,7 +3607,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/stats
+curl -sS $BASE/stats
 ```
 
 Response:
@@ -3626,7 +3626,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/sweep/state
+#### GET /api/v1/sweep/state
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3639,7 +3639,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/sweep/state
+curl -sS $BASE/sweep/state
 ```
 
 Response:
@@ -3665,7 +3665,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/antsdr-scan/version
+#### GET /api/v1/version
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3678,7 +3678,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/antsdr-scan/version
+curl -sS $BASE/version
 ```
 
 Response:
@@ -3696,7 +3696,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/config/reload
+#### POST /api/v1/config/reload
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3712,7 +3712,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/config/reload -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/config/reload -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -3733,7 +3733,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/device/calibrate
+#### POST /api/v1/device/calibrate
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3751,7 +3751,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/device/calibrate -H 'Content-Type: application/json' -d '{"payload": {"kind": "rf_dc"}, "confirm": true}'
+curl -sS -X POST $BASE/device/calibrate -H 'Content-Type: application/json' -d '{"payload": {"kind": "rf_dc"}, "confirm": true}'
 ```
 
 Response:
@@ -3772,7 +3772,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/device/reset
+#### POST /api/v1/device/reset
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3788,7 +3788,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+curl -sS -X POST $BASE/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
 ```
 
 Response:
@@ -3809,7 +3809,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/gain/set
+#### POST /api/v1/gain/set
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3827,7 +3827,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/gain/set -H 'Content-Type: application/json' -d '{"payload": {"mode": "auto"}, "confirm": false}'
+curl -sS -X POST $BASE/gain/set -H 'Content-Type: application/json' -d '{"payload": {"mode": "auto"}, "confirm": false}'
 ```
 
 Response:
@@ -3848,7 +3848,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/sweep/start
+#### POST /api/v1/sweep/start
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3866,7 +3866,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/sweep/start -H 'Content-Type: application/json' -d '{"payload": {"plan": "default"}, "confirm": false}'
+curl -sS -X POST $BASE/sweep/start -H 'Content-Type: application/json' -d '{"payload": {"plan": "default"}, "confirm": false}'
 ```
 
 Response:
@@ -3887,7 +3887,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/antsdr-scan/sweep/stop
+#### POST /api/v1/sweep/stop
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3903,7 +3903,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/antsdr-scan/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:

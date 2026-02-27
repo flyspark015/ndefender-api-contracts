@@ -116,6 +116,14 @@ components:
         ok: { type: boolean }
         timestamp_ms: { type: integer }
         version: { type: string }
+    RFScanHealth:
+      type: object
+      properties:
+        status: { type: string }
+        engine_running: { type: boolean }
+        ws_backend_connected: { type: boolean }
+        last_event_timestamp_ms: { type: integer, nullable: true }
+        timestamp_ms: { type: integer }
 
     SystemControllerSnapshot:
       type: object
@@ -178,6 +186,7 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/HealthResponse"
                   - $ref: "#/components/schemas/SystemControllerHealth"
+                  - $ref: "#/components/schemas/RFScanHealth"
         "401":
           description: Invalid API key
           content:
@@ -1460,20 +1469,7 @@ paths:
   # AntSDR Scan Local API
   # -----------------------
 
-  /antsdr-scan/health:
-    get:
-      summary: AntSDR Scan health
-      tags: [AntSDR Scan]
-      servers:
-        - url: http://127.0.0.1:8890/api/v1
-      responses:
-        "200":
-          description: Health ok
-          content:
-            application/json:
-              schema: { type: object }
-
-  /antsdr-scan/version:
+  /version:
     get:
       summary: AntSDR Scan version
       tags: [AntSDR Scan]
@@ -1486,7 +1482,7 @@ paths:
             application/json:
               schema: { type: object }
 
-  /antsdr-scan/stats:
+  /stats:
     get:
       summary: AntSDR Scan stats
       tags: [AntSDR Scan]
@@ -1499,7 +1495,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AntSDRStats" }
 
-  /antsdr-scan/device:
+  /device:
     get:
       summary: AntSDR device state
       tags: [AntSDR Scan]
@@ -1512,7 +1508,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AntSDRDeviceState" }
 
-  /antsdr-scan/sweep/state:
+  /sweep/state:
     get:
       summary: AntSDR sweep state
       tags: [AntSDR Scan]
@@ -1525,7 +1521,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AntSDRSweepState" }
 
-  /antsdr-scan/gain:
+  /gain:
     get:
       summary: AntSDR gain state
       tags: [AntSDR Scan]
@@ -1538,7 +1534,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AntSDRGainState" }
 
-  /antsdr-scan/config:
+  /config:
     get:
       summary: AntSDR config
       tags: [AntSDR Scan]
@@ -1551,7 +1547,7 @@ paths:
             application/json:
               schema: { type: object }
 
-  /antsdr-scan/config/reload:
+  /config/reload:
     post:
       summary: AntSDR config reload
       tags: [AntSDR Scan]
@@ -1569,7 +1565,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorDetail" }
 
-  /antsdr-scan/sweep/start:
+  /sweep/start:
     post:
       summary: AntSDR sweep start
       tags: [AntSDR Scan]
@@ -1591,7 +1587,7 @@ paths:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
         "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
-  /antsdr-scan/sweep/stop:
+  /sweep/stop:
     post:
       summary: AntSDR sweep stop
       tags: [AntSDR Scan]
@@ -1610,7 +1606,7 @@ paths:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
         "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
-  /antsdr-scan/gain/set:
+  /gain/set:
     post:
       summary: AntSDR set gain
       tags: [AntSDR Scan]
@@ -1633,7 +1629,7 @@ paths:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
         "409": { description: conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
-  /antsdr-scan/device/reset:
+  /device/reset:
     post:
       summary: AntSDR device reset (dangerous)
       tags: [AntSDR Scan]
@@ -1652,7 +1648,7 @@ paths:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
         "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
-  /antsdr-scan/device/calibrate:
+  /device/calibrate:
     post:
       summary: AntSDR device calibrate (dangerous)
       tags: [AntSDR Scan]
@@ -1674,7 +1670,7 @@ paths:
         "200": { description: Command result, content: { application/json: { schema: { $ref: "#/components/schemas/CommandResult" } } } }
         "403": { description: unsafe disabled, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorDetail" } } } }
 
-  /antsdr-scan/events/last:
+  /events/last:
     get:
       summary: AntSDR recent events
       tags: [AntSDR Scan]

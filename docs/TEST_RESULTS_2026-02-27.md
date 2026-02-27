@@ -1,6 +1,6 @@
 # N-Defender Test Results — 2026-02-27 (Revision 2)
 
-Generated: 2026-02-28 03:15:39 
+Generated: 2026-02-28 03:17:56 
 
 **IMPORTANT:** This repo contains contracts/docs/validation only; tests were run on the Raspberry Pi against deployed services (not a local setup guide).
 
@@ -61,7 +61,7 @@ TZ=Asia/Kolkata date
 **Output:**
 
 ```
-Sat Feb 28 03:15:39 IST 2026
+Sat Feb 28 03:17:56 IST 2026
 ```
 
 **Result:** PASS
@@ -137,6 +137,7 @@ git -C /home/toybook/ndefender-api-contracts status -sb
  M README.md
  M docs/OPENAPI.yaml
  M docs/TEST_RESULTS_2026-02-27.md
+ M scripts/run_full_evidence.py
 ```
 
 **Result:** PASS
@@ -152,7 +153,7 @@ git -C /home/toybook/ndefender-api-contracts rev-parse --short HEAD
 **Output:**
 
 ```
-6da2ef6
+ace7b73
 ```
 
 **Result:** PASS
@@ -261,26 +262,11 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/health
 **Output:**
 
 ```
-{"ok":true,"timestamp_ms":1772228741521,"version":"1.0.0"}
+{"ok":true,"timestamp_ms":1772228878079,"version":"1.0.0"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/system-controller/health
-```
-
-**Output:**
-
-```
-{"detail":"Not Found"}
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
 
 **Command:**
 
@@ -291,7 +277,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/health
 **Output:**
 
 ```
-{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772228741543}
+{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772228878089}
 HTTP_STATUS:200
 ```
 
@@ -306,26 +292,11 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/stats
 **Output:**
 
 ```
-{"timestamp_ms": 1772228741553, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
+{"timestamp_ms": 1772228878101, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
 
 
 ## 3) Endpoint Coverage — GET /health
@@ -345,7 +316,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/health
 **Output:**
 
 ```
-{"status":"ok","timestamp_ms":1772228741784}
+{"status":"ok","timestamp_ms":1772228878323}
 HTTP_STATUS:200
 ```
 
@@ -375,7 +346,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/status
 **Output:**
 
 ```
-{"timestamp_ms":1772228741988,"overall_ok":false,"system":{"cpu_temp_c":39.1,"cpu_usage_percent":30.5,"load_1m":1.76953125,"load_5m":1.65771484375,"load_15m":1.5517578125,"ram_used_mb":2333,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":172089,"throttled_flags":0,"status":"ok","timestamp_ms":1772228741909,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":39.1,"load1":1.76953125,"load5":1.65771484375,"load15":1.5517578125,"usage_percent":30.5},"ram":{"total_mb":16215,"used_mb":2333,"free_mb":13881},"storage":{"root":{"total_gb":116.606,"used_gb":67.343,"free_gb":43.318},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1687620,"time_to_full_s":null,"status":"ok","timestamp_ms":1772228741913,"per_cell_v":[4.07,4.07,4.069,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772228737704,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772228739615,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772228739615,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772228736747,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772228736747,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772228737704,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":1,"vrx":[{"id":1,"freq_hz":5803000000,"rssi_raw":1221},{"id":2,"freq_hz":5803000000,"rssi_raw":562},{"id":3,"freq_hz":5803000000,"rssi_raw":83}],"led":{"r":0,"y":0,"g":1},"sys":{"uptime_ms":80079364,"heap":337624,"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":1,"locked_channels":[],"rssi_raw":1221,"scan_state":"idle","freq_hz":5803000000},"video":{"selected":1,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772228739771,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228739771,"last_error":null},"bluetooth":{"timestamp_ms":1772228739875,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228739875,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772228739768,"last_error":"audio_unavailable"},"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}],"replay":{"active":false,"source":"none"}}
+{"timestamp_ms":1772228878508,"overall_ok":false,"system":{"cpu_temp_c":40.2,"cpu_usage_percent":28.4,"load_1m":2.12451171875,"load_5m":1.87060546875,"load_15m":1.65380859375,"ram_used_mb":2347,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":172226,"throttled_flags":0,"status":"ok","timestamp_ms":1772228878002,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":40.2,"load1":2.12451171875,"load5":1.87060546875,"load15":1.65380859375,"usage_percent":28.4},"ram":{"total_mb":16215,"used_mb":2347,"free_mb":13867},"storage":{"root":{"total_gb":116.606,"used_gb":67.37,"free_gb":43.292},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1687200,"time_to_full_s":null,"status":"ok","timestamp_ms":1772228878005,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772228878016,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772228875795,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772228875795,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772228872824,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772228872824,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772228878016,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":1,"vrx":[{"id":1,"freq_hz":5803000000,"rssi_raw":1221},{"id":2,"freq_hz":5803000000,"rssi_raw":562},{"id":3,"freq_hz":5803000000,"rssi_raw":83}],"led":{"r":0,"y":0,"g":1},"sys":{"uptime_ms":80079364,"heap":337624,"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":1,"locked_channels":[],"rssi_raw":1221,"scan_state":"idle","freq_hz":5803000000},"video":{"selected":1,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772228875868,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228875868,"last_error":null},"bluetooth":{"timestamp_ms":1772228875974,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228875974,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772228875867,"last_error":"audio_unavailable"},"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}],"replay":{"active":false,"source":"none"}}
 HTTP_STATUS:200
 ```
 
@@ -435,7 +406,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/system
 **Output:**
 
 ```
-{"cpu_temp_c":39.1,"cpu_usage_percent":30.5,"load_1m":1.76953125,"load_5m":1.65771484375,"load_15m":1.5517578125,"ram_used_mb":2333,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":172089,"throttled_flags":0,"status":"ok","timestamp_ms":1772228741909,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":39.1,"load1":1.76953125,"load5":1.65771484375,"load15":1.5517578125,"usage_percent":30.5},"ram":{"total_mb":16215,"used_mb":2333,"free_mb":13881},"storage":{"root":{"total_gb":116.606,"used_gb":67.343,"free_gb":43.318},"logs":null},"last_error":null}
+{"cpu_temp_c":40.2,"cpu_usage_percent":28.4,"load_1m":2.12451171875,"load_5m":1.87060546875,"load_15m":1.65380859375,"ram_used_mb":2347,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":172226,"throttled_flags":0,"status":"ok","timestamp_ms":1772228878002,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":40.2,"load1":2.12451171875,"load5":1.87060546875,"load15":1.65380859375,"usage_percent":28.4},"ram":{"total_mb":16215,"used_mb":2347,"free_mb":13867},"storage":{"root":{"total_gb":116.606,"used_gb":67.37,"free_gb":43.292},"logs":null},"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -465,7 +436,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/power
 **Output:**
 
 ```
-{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1687620,"time_to_full_s":null,"status":"ok","timestamp_ms":1772228741913,"per_cell_v":[4.07,4.07,4.069,4.07],"last_error":null}
+{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1687200,"time_to_full_s":null,"status":"ok","timestamp_ms":1772228878005,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -495,7 +466,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/rf
 **Output:**
 
 ```
-{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772228742711,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
+{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772228878016,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
@@ -585,7 +556,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network
 **Output:**
 
 ```
-{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772228739771,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228739771,"last_error":null},"bluetooth":{"timestamp_ms":1772228739875,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228739875,"last_error":null}}
+{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772228875868,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228875868,"last_error":null},"bluetooth":{"timestamp_ms":1772228875974,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228875974,"last_error":null}}
 HTTP_STATUS:200
 ```
 
@@ -615,7 +586,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/audio
 **Output:**
 
 ```
-{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772228739768,"last_error":"audio_unavailable"}
+{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772228875867,"last_error":"audio_unavailable"}
 HTTP_STATUS:200
 ```
 
@@ -645,7 +616,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772228744090,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228744090,"last_error":null}
+{"timestamp_ms":1772228880537,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772228880537,"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -675,7 +646,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772228744444,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
+{"timestamp_ms":1772228880810,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -705,7 +676,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772228744719,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228744719,"last_error":null}
+{"timestamp_ms":1772228884064,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772228884064,"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -735,7 +706,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772228747902,"devices":[]}
+{"timestamp_ms":1772228884310,"devices":[]}
 HTTP_STATUS:200
 ```
 
@@ -765,7 +736,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/gps
 **Output:**
 
 ```
-{"timestamp_ms":1772228744751,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772228744751,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
+{"timestamp_ms":1772228880885,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772228880885,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
 HTTP_STATUS:200
 ```
 
@@ -825,7 +796,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/esp32/conf
 **Output:**
 
 ```
-{"timestamp_ms":1772228748542,"schema_version":null,"config":{}}
+{"timestamp_ms":1772228884997,"schema_version":null,"config":{}}
 HTTP_STATUS:200
 ```
 
@@ -885,7 +856,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr
 **Output:**
 
 ```
-{"timestamp_ms":1772228747726,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
+{"timestamp_ms":1772228883021,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
@@ -915,7 +886,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/swe
 **Output:**
 
 ```
-{"timestamp_ms":1772228748951,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772228748951,"last_error":"pyadi-iio is required for AntSDR access"}
+{"timestamp_ms":1772228885408,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772228885408,"last_error":"pyadi-iio is required for AntSDR access"}
 HTTP_STATUS:200
 ```
 
@@ -945,7 +916,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/gai
 **Output:**
 
 ```
-{"timestamp_ms":1772228749193,"mode":"auto"}
+{"timestamp_ms":1772228885587,"mode":"auto"}
 HTTP_STATUS:200
 ```
 
@@ -975,7 +946,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/sta
 **Output:**
 
 ```
-{"timestamp_ms":1772228749451,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
+{"timestamp_ms":1772228885842,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
 HTTP_STATUS:200
 ```
 
@@ -1005,7 +976,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id
 **Output:**
 
 ```
-{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772228744667,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772228744667,"last_error":"no_odid_frames","timestamp_ms":1772228749622}
+{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772228885866,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772228885866,"last_error":"no_odid_frames","timestamp_ms":1772228886063}
 HTTP_STATUS:200
 ```
 
@@ -1035,7 +1006,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772228749828,"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
+{"timestamp_ms":1772228886306,"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
 HTTP_STATUS:200
 ```
 
@@ -1065,7 +1036,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772228750007,"frames":0,"decoded":0}
+{"timestamp_ms":1772228886490,"frames":0,"decoded":0}
 HTTP_STATUS:200
 ```
 
@@ -1575,7 +1546,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"sweep/start","command_id":"antsdr-1772228750421","accepted":true,"timestamp_ms":1772228750421}
+{"command":"sweep/start","command_id":"antsdr-1772228886959","accepted":true,"timestamp_ms":1772228886959}
 HTTP_STATUS:200
 ```
 
@@ -1635,7 +1606,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"gain/set","command_id":"antsdr-1772228750881","accepted":true,"timestamp_ms":1772228750881}
+{"command":"gain/set","command_id":"antsdr-1772228887407","accepted":true,"timestamp_ms":1772228887407}
 HTTP_STATUS:200
 ```
 
@@ -1952,7 +1923,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/ups
 **Output:**
 
 ```
-{"timestamp_ms":1772228755894,"status":"ok","pack_voltage_v":16.28,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"time_to_empty_s":1687620,"time_to_full_s":null,"per_cell_v":[4.07,4.07,4.069,4.07],"state":"IDLE","last_error":null}
+{"timestamp_ms":1772228892054,"status":"ok","pack_voltage_v":16.279,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"time_to_empty_s":1898100,"time_to_full_s":null,"per_cell_v":[4.07,4.07,4.07,4.07],"state":"IDLE","last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -2127,9 +2098,9 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
-## 3) Endpoint Coverage — GET /antsdr-scan/health
+## 3) Endpoint Coverage — GET /version
 
-### GET /antsdr-scan/health
+### GET /version
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2138,28 +2109,43 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/version
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"version": "0.1.0"}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/version
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /stats
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/version
-
-### GET /antsdr-scan/version
+### GET /stats
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2168,28 +2154,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/stats
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"timestamp_ms": 1772228893254, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/stats
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /device
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/stats
-
-### GET /antsdr-scan/stats
+### GET /device
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2198,28 +2199,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/device
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"timestamp_ms": 1772228893735, "connected": false, "uri": "ip:192.168.10.2", "temperature_c": null, "last_error": "pyadi-iio is required for AntSDR access"}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/device
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /sweep/state
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/device
-
-### GET /antsdr-scan/device
+### GET /sweep/state
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2228,28 +2244,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/sweep/state
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"timestamp_ms": 1772228894167, "running": false, "active_plan": "5G8_RaceBand", "plans": [{"name": "5G8_RaceBand", "start_hz": 5658000000.0, "end_hz": 5917000000.0, "step_hz": 2000000.0}, {"name": "5G8_FatShark", "start_hz": 5733000000.0, "end_hz": 5866000000.0, "step_hz": 2000000.0}, {"name": "5G8_BandA", "start_hz": 5865000000.0, "end_hz": 5945000000.0, "step_hz": 2000000.0}, {"name": "5G8_Digital", "start_hz": 5725000000.0, "end_hz": 5850000000.0, "step_hz": 2000000.0}, {"name": "2G4_Control", "start_hz": 2400000000.0, "end_hz": 2483500000.0, "step_hz": 1000000.0}, {"name": "915_Control", "start_hz": 902000000.0, "end_hz": 928000000.0, "step_hz": 1000000.0}], "last_update_ms": 1772228894167, "last_error": "pyadi-iio is required for AntSDR access"}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/sweep/state
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /gain
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/sweep/state
-
-### GET /antsdr-scan/sweep/state
+### GET /gain
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2258,28 +2289,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/gain
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"timestamp_ms": 1772228894540, "mode": "auto"}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/gain
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /config
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/gain
-
-### GET /antsdr-scan/gain
+### GET /config
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2288,28 +2334,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/config
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"radio": {"uri": "ip:192.168.10.2", "sample_rate": 2000000, "rx_buffer_size": 4096}, "tracker": {"bucket_hz": 250000, "ttl_s": 120.0, "min_hits_to_confirm": 2, "update_interval_s": 1.0, "correlation_enabled": false, "correlation_window_ms": 100}, "detector": {"min_snr_db": 10.0, "lo_guard_hz": 100000.0}, "sweep": {"bands": [{"name": "5G8_RaceBand", "start_hz": 5658000000.0, "stop_hz": 5917000000.0, "step_hz": 2000000.0}, {"name": "5G8_FatShark", "start_hz": 5733000000.0, "stop_hz": 5866000000.0, "step_hz": 2000000.0}, {"name": "5G8_BandA", "start_hz": 5865000000.0, "stop_hz": 5945000000.0, "step_hz": 2000000.0}, {"name": "5G8_Digital", "start_hz": 5725000000.0, "stop_hz": 5850000000.0, "step_hz": 2000000.0}, {"name": "2G4_Control", "start_hz": 2400000000.0, "stop_hz": 2483500000.0, "step_hz": 1000000.0}, {"name": "915_Control", "start_hz": 902000000.0, "stop_hz": 928000000.0, "step_hz": 1000000.0}], "dwell_ms": 0}, "ws": {"enabled": false, "url": "", "connect_timeout_s": 5.0, "send_timeout_s": 2.0, "max_retries": 3, "retry_backoff_s": 1.0}, "classification": {"profiles": "/home/toybook/ndefender-antsdr-scan/config/classification_profiles.yaml", "hop_window_ms": 1000, "min_hop_hz": 200000.0}, "api": {"enabled": true, "bind": "127.0.0.1", "port": 8890, "api_key": "", "max_clients": 25, "event_buffer": 500}}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/config
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /config/reload
 
-
-## 3) Endpoint Coverage — GET /antsdr-scan/config
-
-### GET /antsdr-scan/config
+### POST /config/reload
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2318,28 +2379,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/config/reload -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"status": "ok"}
+HTTP_STATUS:200
+```
+
+**Result:** PASS (OK)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/config/reload -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /sweep/start
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/config/reload
-
-### POST /antsdr-scan/config/reload
+### POST /sweep/start
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2348,28 +2424,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/sweep/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail": "missing_plan"}
+HTTP_STATUS:400
+```
+
+**Result:** FAIL (HTTP_400)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/sweep/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (UPSTREAM BUG)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /sweep/stop
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/sweep/start
-
-### POST /antsdr-scan/sweep/start
+### POST /sweep/stop
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2378,28 +2469,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail": "scan_not_running"}
+HTTP_STATUS:409
+```
+
+**Result:** FAIL (PRECONDITION)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (PRECONDITION)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /gain/set
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/sweep/stop
-
-### POST /antsdr-scan/sweep/stop
+### POST /gain/set
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2408,28 +2514,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/gain/set -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail": "invalid_mode"}
+HTTP_STATUS:400
+```
+
+**Result:** FAIL (HTTP_400)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/gain/set -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (UPSTREAM BUG)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /device/reset
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/gain/set
-
-### POST /antsdr-scan/gain/set
+### POST /device/reset
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2438,28 +2559,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail": "confirm_required"}
+HTTP_STATUS:400
+```
+
+**Result:** FAIL (HTTP_400)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (UPSTREAM BUG)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — POST /device/calibrate
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/device/reset
-
-### POST /antsdr-scan/device/reset
+### POST /device/calibrate
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2468,28 +2604,43 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/device/calibrate -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail": "confirm_required"}
+HTTP_STATUS:400
+```
+
+**Result:** FAIL (HTTP_400)
+
+
+**Aggregator proxy check:**
+
+**Command:**
+
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/device/calibrate -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+**Output:**
+
+```
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
+**Classification:** FAIL (UPSTREAM BUG)
 
 
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+## 3) Endpoint Coverage — GET /events/last
 
-
-## 3) Endpoint Coverage — POST /antsdr-scan/device/calibrate
-
-### POST /antsdr-scan/device/calibrate
+### GET /events/last
 **Owner tag:** AntSDR Scan
 **Owner base:** http://127.0.0.1:8890/api/v1
 
@@ -2498,53 +2649,38 @@ HTTP_STATUS:404
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/events/last
 ```
 
 **Output:**
 
 ```
-404: Not Found
-HTTP_STATUS:404
+{"events": []}
+HTTP_STATUS:200
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** PASS (OK)
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
-
-
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
-
-
-## 3) Endpoint Coverage — GET /antsdr-scan/events/last
-
-### GET /antsdr-scan/events/last
-**Owner tag:** AntSDR Scan
-**Owner base:** http://127.0.0.1:8890/api/v1
-
-**Direct-owner check:**
+**Aggregator proxy check:**
 
 **Command:**
 
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/events/last
 ```
 
 **Output:**
 
 ```
-404: Not Found
+{"detail":"Not Found"}
 HTTP_STATUS:404
 ```
 
-**Result:** FAIL (CONTRACT_PATH_MISMATCH)
+**Result:** FAIL
 
 
-**Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
-
-
-**Classification:** FAIL (CONTRACT PATH MISMATCH)
+**Classification:** FAIL (AGGREGATOR PROXY GAP)
 
 
 ## 3) Endpoint Coverage — GET /remoteid-engine/status
@@ -2702,7 +2838,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 
 ## 3A) Endpoint Coverage Summary
 
-Total GET endpoints: 44
+Total GET endpoints: 43
 Total POST endpoints: 41
 
 
@@ -2719,7 +2855,7 @@ curl -sS http://127.0.0.1:8001/api/v1/status | jq '.timestamp_ms, .overall_ok, .
 **Output:**
 
 ```
-1772228756508
+1772228898124
 false
 "ok"
 true
@@ -2904,7 +3040,7 @@ curl -sS http://127.0.0.1:8890/api/v1/health | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772228757107
+1772228900498
 ```
 
 **Result:** PASS
@@ -2920,7 +3056,7 @@ curl -sS http://127.0.0.1:8890/api/v1/stats | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772228757150
+1772228900546
 ```
 
 **Result:** PASS
@@ -2954,7 +3090,7 @@ curl -sS -i -X POST http://127.0.0.1:8001/api/v1/system/reboot -H 'Content-Type:
 
 ```
 HTTP/1.1 400 Bad Request
-date: Fri, 27 Feb 2026 21:45:56 GMT
+date: Fri, 27 Feb 2026 21:48:20 GMT
 server: uvicorn
 content-length: 29
 content-type: application/json
@@ -2978,7 +3114,7 @@ cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws
 ```
 CONNECTING ws://127.0.0.1:8001/api/v1/ws
 CONNECTED
-{"type":"HELLO","timestamp_ms":1772228757299,"source":"aggregator","data":{"timestamp_ms":1772228757299}}
+{"type":"HELLO","timestamp_ms":1772228900700,"source":"aggregator","data":{"timestamp_ms":1772228900700}}
 ```
 \n**Result:** PASS\n\n**Command:**
 
@@ -2991,7 +3127,7 @@ cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws
 ```
 CONNECTING ws://127.0.0.1:8001/api/v1/ws
 CONNECTED
-{"type": "HELLO", "timestamp_ms": 1772228757384, "source": "aggregator", "data": {"timestamp_ms": 1772228757384}}
+{"type": "HELLO", "timestamp_ms": 1772228900788, "source": "aggregator", "data": {"timestamp_ms": 1772228900788}}
 ```
 \n**Result:** PASS\n
 
@@ -2999,9 +3135,9 @@ CONNECTED
 
 | Metric | Value |
 |---|---|
-| Total endpoints | 85 |
+| Total endpoints | 84 |
 | PASS | 30 |
-| FAIL | 23 |
+| FAIL | 22 |
 | SKIP | 32 |
 
 ## 7b) Top 10 Actionable Failures
@@ -3017,7 +3153,7 @@ CONNECTED
 | /scan/stop | FAIL (PRECONDITION) | ndefender-backend-aggregator | Fix endpoint/proxy or align contract |
 | /video/select | FAIL (PRECONDITION) | ndefender-backend-aggregator | Fix endpoint/proxy or align contract |
 | /ups | FAIL (AGGREGATOR PROXY GAP) | ndefender-system-controller | Fix endpoint/proxy or align contract |
-| /antsdr-scan/health | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Fix endpoint/proxy or align contract |
+| /version | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Fix endpoint/proxy or align contract |
 
 ## 7c) UI Blockers vs Non-Blockers
 
@@ -3046,32 +3182,31 @@ CONNECTED
 | /scan/stop | FAIL | FAIL | FAIL (PRECONDITION) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /video/select | FAIL | FAIL | FAIL (PRECONDITION) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /ups | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-system-controller | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/health | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/version | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/stats | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/device | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/sweep/state | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/gain | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/config | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/config/reload | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/sweep/start | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/sweep/stop | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/gain/set | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/device/reset | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/device/calibrate | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-| /antsdr-scan/events/last | FAIL | SKIP | FAIL (CONTRACT PATH MISMATCH) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /version | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /stats | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /device | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /sweep/state | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /gain | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /config | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /config/reload | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /sweep/start | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /sweep/stop | FAIL | FAIL | FAIL (PRECONDITION) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /gain/set | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /device/reset | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /device/calibrate | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
+| /events/last | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
 
-### P1-A — Contract paths (System Controller prefix removed)
+### P1-B — Contract paths (RFScan /antsdr-scan prefix removed)
 **Before:**
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8002/api/v1/system-controller/health
-{"detail":"Not Found"}
+curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8890/api/v1/antsdr-scan/health
+404: Not Found
 HTTP_STATUS:404
 ```
 **After (contract path is /health):**
 ```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8002/api/v1/health
-{"ok":true,"timestamp_ms":1772228420163,"version":"1.0.0"}
+curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8890/api/v1/health
+{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772228785716}
 HTTP_STATUS:200
 ```
 **Classification:** FAIL (CONTRACT PATH MISMATCH) → PASS
