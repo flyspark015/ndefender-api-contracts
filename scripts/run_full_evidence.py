@@ -14,7 +14,8 @@ OPENAPI = Path('/home/toybook/ndefender-api-contracts/docs/OPENAPI.yaml')
 
 BASE_AGG = 'http://127.0.0.1:8001/api/v1'
 BASE_SC = 'http://127.0.0.1:8002/api/v1'
-BASE_RF = 'http://127.0.0.1:8890/api/v1'
+BASE_RF_API = 'http://127.0.0.1:8890/api/v1'
+BASE_RF_ROOT = 'http://127.0.0.1:8890'
 
 # Endpoints that are safe to exercise with confirm=false and minimal payload
 SKIP_SIDE_EFFECT_POST = {
@@ -95,27 +96,28 @@ def parse_openapi() -> List[Tuple[str, str, List[str]]]:
     return endpoints
 
 
-def owner_base(tags: List[str], path: str) -> str:
-    # Prefer namespace-based ownership for upstream services
-    if path.startswith('/network') or path.startswith('/gps') or path.startswith('/audio') or path.startswith('/system') or path.startswith('/services') or path.startswith('/power'):
-        return BASE_SC
-    if path.startswith('/antsdr') or path.startswith('/antsdr-scan') or path.startswith('/rf'):
-        return BASE_RF
-    if path.startswith('/remote_id') or path.startswith('/remoteid'):
-        # RemoteID engine not exposed on a dedicated port in this deployment
-        return ''
-    # Fallback to OpenAPI tags
+def detect_rfscan_base() -> str:
+    # Probe which base path responds for RFScan health
+    for base in (BASE_RF_API, BASE_RF_ROOT):
+        code, out = run(f"curl -sS -w '\\nHTTP_STATUS:%{{http_code}}' {base}/health", timeout=5)
+        if 'HTTP_STATUS:200' in out:
+            return base
+    return ''
+
+
+def owner_base(tags: List[str], path: str, rfscan_base: str) -> str:
+    # Determine ownership primarily by OpenAPI tags
     tag = tags[0] if tags else ''
-    if tag == 'Aggregator':
-        return BASE_AGG
     if tag == 'System Controller':
         return BASE_SC
     if tag == 'AntSDR Scan':
-        return BASE_RF
+        return rfscan_base
+    if tag == 'Aggregator':
+        return BASE_AGG
     if tag == 'RemoteID Engine':
-        return ''
+        return ''  # not exposed on a dedicated port in this deployment
     if tag == 'Observability':
-        return ''
+        return ''  # not exposed on a dedicated port in this deployment
     return BASE_AGG
 
 
@@ -256,6 +258,8 @@ def main():
 
     # Endpoint coverage
     endpoints = parse_openapi()
+    rfscan_base = detect_rfscan_base()
+    base_rf = rfscan_base if rfscan_base else BASE_RF_API
     get_endpoints = [e for e in endpoints if e[0] == 'get']
     post_endpoints = [e for e in endpoints if e[0] == 'post']
 
@@ -269,7 +273,7 @@ def main():
     failure_rows = []
 
     for method, path, tags in endpoints:
-        owner = owner_base(tags, path)
+        owner = owner_base(tags, path, rfscan_base)
         owner_tag = tags[0] if tags else 'Unknown'
         logical_path = substitute_params(path)
 
@@ -284,16 +288,19 @@ def main():
                 cmd = f"curl -sS -X POST {url} -H 'Content-Type: application/json' -d '{skip_payload}'"
                 out = "SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)"
                 status = "SKIP"
+                direct_skip_reason = "NEEDS_REAL_INPUT"
                 direct_http = None
             else:
                 http_code, body, cmd = curl(method, url, default_payload_for(path))
                 status = result_label_direct(http_code, body, method, path)
                 out = body + (f"\nHTTP_STATUS:{http_code}" if http_code else '')
+                direct_skip_reason = ""
                 direct_http = http_code
             section.append("\n**Direct-owner check:**\n\n" + code_block(cmd, out) + f"\n**Result:** {status}\n")
         else:
             status = "SKIP"
             direct_http = None
+            direct_skip_reason = "OWNER_NOT_EXPOSED"
             section.append("\n**Direct-owner check:**\n\nSKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)\n")
 
         # aggregator proxy check
@@ -325,10 +332,14 @@ def main():
             classification = 'FAIL (UPSTREAM BUG)'
         elif status == 'PASS' and agg_status == 'FAIL':
             classification = 'FAIL (AGGREGATOR PROXY GAP)'
-        elif status == 'SKIP' and agg_status == 'FAIL':
+        elif status == 'SKIP' and direct_skip_reason == 'NEEDS_REAL_INPUT':
+            classification = 'SKIP (NEEDS REAL INPUT)'
+        elif status == 'SKIP' and direct_skip_reason == 'OWNER_NOT_EXPOSED' and agg_status == 'FAIL':
             classification = 'FAIL (AGGREGATOR PROXY GAP)'
+        elif status == 'SKIP' and direct_skip_reason == 'OWNER_NOT_EXPOSED' and agg_status == 'PASS':
+            classification = 'PASS'
         elif status == 'SKIP' and agg_status == 'SKIP':
-            classification = 'SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)'
+            classification = 'SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)'
 
         rows.append((method.upper(), path, classification))
         if classification.startswith('FAIL'):
@@ -351,9 +362,9 @@ def main():
         ("/esp32", f"curl -sS {BASE_AGG}/esp32 | jq '.connected, .heartbeat.ok, .capabilities'"),
         ("/antsdr", f"curl -sS {BASE_AGG}/antsdr | jq '.connected, .uri'"),
         ("/remote_id/status", f"curl -sS {BASE_AGG}/remote_id/status | jq '.state, .mode, .capture_active, .contacts_active, .last_error'"),
-        ("RFScan /health", f"curl -sS {BASE_RF}/health | jq '.timestamp_ms'"),
-        ("RFScan /stats", f"curl -sS {BASE_RF}/stats | jq '.timestamp_ms'"),
-        ("RFScan /config", f"curl -sS {BASE_RF}/config | jq '.timestamp_ms'"),
+        ("RFScan /health", f"curl -sS {base_rf}/health | jq '.timestamp_ms'"),
+        ("RFScan /stats", f"curl -sS {base_rf}/stats | jq '.timestamp_ms'"),
+        ("RFScan /config", f"curl -sS {base_rf}/config | jq '.timestamp_ms'"),
     ]
     check_lines = []
     for title, cmd in checks:

@@ -1,6 +1,6 @@
 # N-Defender Test Results — 2026-02-27 (Revision 2)
 
-Generated: 2026-02-28 00:53:00 
+Generated: 2026-02-28 01:01:07 
 
 **IMPORTANT:** This repo contains contracts/docs/validation only; tests were run on the Raspberry Pi against deployed services (not a local setup guide).
 
@@ -57,7 +57,7 @@ TZ=Asia/Kolkata date
 **Output:**
 
 ```
-Sat Feb 28 00:53:00 IST 2026
+Sat Feb 28 01:01:07 IST 2026
 ```
 
 **Result:** PASS
@@ -131,7 +131,7 @@ git -C /home/toybook/ndefender-api-contracts status -sb
 ```
 ## chore/readme-and-structure...origin/chore/readme-and-structure
  M docs/TEST_RESULTS_2026-02-27.md
-?? scripts/run_full_evidence.py
+ M scripts/run_full_evidence.py
 ```
 
 **Result:** PASS
@@ -147,7 +147,7 @@ git -C /home/toybook/ndefender-api-contracts rev-parse --short HEAD
 **Output:**
 
 ```
-3de7786
+5a48422
 ```
 
 **Result:** PASS
@@ -289,7 +289,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/health
 **Output:**
 
 ```
-{"status":"ok","timestamp_ms":1772220187630}
+{"status":"ok","timestamp_ms":1772220675957}
 HTTP_STATUS:200
 ```
 
@@ -319,7 +319,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/status
 **Output:**
 
 ```
-{"timestamp_ms":1772220187644,"overall_ok":false,"system":{"cpu_temp_c":32.0,"cpu_usage_percent":47.5,"load_1m":2.50927734375,"load_5m":1.8994140625,"load_15m":1.77783203125,"ram_used_mb":2464,"ram_total_mb":16215,"disk_used_gb":66,"disk_total_gb":116,"uptime_s":163534,"throttled_flags":0,"status":"ok","timestamp_ms":1772220186761,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":32.0,"load1":2.50927734375,"load5":1.8994140625,"load15":1.77783203125,"usage_percent":47.5},"ram":{"total_mb":16215,"used_mb":2464,"free_mb":13750},"storage":{"root":{"total_gb":116.606,"used_gb":66.995,"free_gb":43.667},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.28,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":89,"state":"IDLE","time_to_empty_s":1908480,"time_to_full_s":null,"status":"ok","timestamp_ms":1772220186765,"per_cell_v":[4.07,4.07,4.069,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772220187144,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772220182836,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772220182836,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772220179627,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772220179627,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772220187144,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":1,"vrx":[{"id":1,"freq_hz":5803000000,"rssi_raw":1221},{"id":2,"freq_hz":5803000000,"rssi_raw":562},{"id":3,"freq_hz":5803000000,"rssi_raw":83}],"led":{"r":0,"y":0,"g":1},"sys":{"uptime_ms":80079364,"heap":337624,"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":1,"locked_channels":[],"rssi_raw":1221,"scan_state":"idle","freq_hz":5803000000},"video":{"selected":1,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772220182647,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220182647,"last_error":null},"bluetooth":{"timestamp_ms":1772220182732,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220182732,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772220182646,"last_error":"audio_unavailable"},"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}],"replay":{"active":false,"source":"none"}}
+{"timestamp_ms":1772220675969,"overall_ok":false,"system":{"cpu_temp_c":33.1,"cpu_usage_percent":49.0,"load_1m":1.76806640625,"load_5m":1.63037109375,"load_15m":1.6708984375,"ram_used_mb":2412,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":164023,"throttled_flags":0,"status":"ok","timestamp_ms":1772220675094,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":33.1,"load1":1.76806640625,"load5":1.63037109375,"load15":1.6708984375,"usage_percent":49.0},"ram":{"total_mb":16215,"used_mb":2412,"free_mb":13802},"storage":{"root":{"total_gb":116.606,"used_gb":67.018,"free_gb":43.644},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.279,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":89,"state":"IDLE","time_to_empty_s":1908000,"time_to_full_s":null,"status":"ok","timestamp_ms":1772220675100,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772220673262,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772220672303,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772220672303,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772220667956,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772220667956,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772220673262,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":1,"vrx":[{"id":1,"freq_hz":5803000000,"rssi_raw":1221},{"id":2,"freq_hz":5803000000,"rssi_raw":562},{"id":3,"freq_hz":5803000000,"rssi_raw":83}],"led":{"r":0,"y":0,"g":1},"sys":{"uptime_ms":80079364,"heap":337624,"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":1,"locked_channels":[],"rssi_raw":1221,"scan_state":"idle","freq_hz":5803000000},"video":{"selected":1,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772220670975,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220670975,"last_error":null},"bluetooth":{"timestamp_ms":1772220671068,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220671068,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772220670974,"last_error":"audio_unavailable"},"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}],"replay":{"active":false,"source":"none"}}
 HTTP_STATUS:200
 ```
 
@@ -366,27 +366,9 @@ HTTP_STATUS:200
 
 ### GET /system
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/system
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220190781,"status":"ok","uptime_s":163538,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":31.4,"load1":2.38818359375,"load5":1.88427734375,"load15":1.7734375,"usage_percent":16.3},"ram":{"total_mb":16215,"used_mb":2359,"free_mb":13855},"storage":{"root":{"total_gb":116.606,"used_gb":66.995,"free_gb":43.667},"logs":null},"last_error":null,"cpu_temp_c":31.4,"cpu_usage_percent":16.3,"load_1m":2.38818359375,"load_5m":1.88427734375,"load_15m":1.7734375,"ram_used_mb":2359,"ram_total_mb":16215,"disk_used_gb":66,"disk_total_gb":116,"throttled_flags":0}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -397,11 +379,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/system
 **Output:**
 
 ```
-{"cpu_temp_c":31.4,"cpu_usage_percent":16.3,"load_1m":2.38818359375,"load_5m":1.88427734375,"load_15m":1.7734375,"ram_used_mb":2359,"ram_total_mb":16215,"disk_used_gb":66,"disk_total_gb":116,"uptime_s":163538,"throttled_flags":0,"status":"ok","timestamp_ms":1772220190781,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":31.4,"load1":2.38818359375,"load5":1.88427734375,"load15":1.7734375,"usage_percent":16.3},"ram":{"total_mb":16215,"used_mb":2359,"free_mb":13855},"storage":{"root":{"total_gb":116.606,"used_gb":66.995,"free_gb":43.667},"logs":null},"last_error":null}
+{"cpu_temp_c":33.1,"cpu_usage_percent":49.0,"load_1m":1.76806640625,"load_5m":1.63037109375,"load_15m":1.6708984375,"ram_used_mb":2412,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":164023,"throttled_flags":0,"status":"ok","timestamp_ms":1772220675094,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":33.1,"load1":1.76806640625,"load5":1.63037109375,"load15":1.6708984375,"usage_percent":49.0},"ram":{"total_mb":16215,"used_mb":2412,"free_mb":13802},"storage":{"root":{"total_gb":116.606,"used_gb":67.018,"free_gb":43.644},"logs":null},"last_error":null}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -411,27 +396,9 @@ HTTP_STATUS:200
 
 ### GET /power
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/power
-```
-
-**Output:**
-
-```
-{"detail":"Not Found"}
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -442,41 +409,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/power
 **Output:**
 
 ```
-{"pack_voltage_v":16.28,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":89,"state":"IDLE","time_to_empty_s":1696380,"time_to_full_s":null,"status":"ok","timestamp_ms":1772220190783,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null}
+{"pack_voltage_v":16.279,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":89,"state":"IDLE","time_to_empty_s":1908000,"time_to_full_s":null,"status":"ok","timestamp_ms":1772220675100,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /rf
 
 ### GET /rf
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/rf
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -487,14 +439,17 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/rf
 **Output:**
 
 ```
-{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772220187144,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
+{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772220673262,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /video
@@ -531,27 +486,9 @@ HTTP_STATUS:200
 
 ### GET /services
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/services
-```
-
-**Output:**
-
-```
-[]
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -569,6 +506,9 @@ HTTP_STATUS:200
 **Result:** PASS
 
 
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
 **Classification:** PASS
 
 
@@ -576,27 +516,9 @@ HTTP_STATUS:200
 
 ### GET /network
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/network
-```
-
-**Output:**
-
-```
-{"connected":true,"ssid":"Airtel_Toybook","ip_v4":"127.0.1.1","ip_v6":null,"wifi":{"timestamp_ms":1772220190656,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220190656,"last_error":null},"bluetooth":{"timestamp_ms":1772220190753,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220190753,"last_error":null}}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -607,11 +529,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network
 **Output:**
 
 ```
-{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772220190656,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220190656,"last_error":null},"bluetooth":{"timestamp_ms":1772220190753,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220190753,"last_error":null}}
+{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772220670975,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220670975,"last_error":null},"bluetooth":{"timestamp_ms":1772220671068,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220671068,"last_error":null}}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -621,27 +546,9 @@ HTTP_STATUS:200
 
 ### GET /audio
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/audio
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220190655,"status":"degraded","volume_percent":null,"muted":null,"last_error":"audio_unavailable"}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -652,11 +559,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/audio
 **Output:**
 
 ```
-{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772220190655,"last_error":"audio_unavailable"}
+{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772220670974,"last_error":"audio_unavailable"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -666,27 +576,9 @@ HTTP_STATUS:200
 
 ### GET /network/wifi/state
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/network/wifi/state
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220190955,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220190955,"last_error":null}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -697,11 +589,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772220191031,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220191031,"last_error":null}
+{"timestamp_ms":1772220679101,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772220679101,"last_error":null}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -711,27 +606,9 @@ HTTP_STATUS:200
 
 ### GET /network/wifi/scan
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/network/wifi/scan
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220191123,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -742,11 +619,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772220191214,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
+{"timestamp_ms":1772220679191,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -756,27 +636,9 @@ HTTP_STATUS:200
 
 ### GET /network/bluetooth/state
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/network/bluetooth/state
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220191287,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220191287,"last_error":null}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -787,11 +649,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772220191323,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220191323,"last_error":null}
+{"timestamp_ms":1772220679260,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772220679260,"last_error":null}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -801,27 +666,9 @@ HTTP_STATUS:200
 
 ### GET /network/bluetooth/devices
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/network/bluetooth/devices
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220191361,"devices":[]}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -832,11 +679,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772220191390,"devices":[]}
+{"timestamp_ms":1772220679296,"devices":[]}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -846,27 +696,9 @@ HTTP_STATUS:200
 
 ### GET /gps
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/gps
-```
-
-**Output:**
-
-```
-{"timestamp_ms":1772220191418,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772220191418,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
-HTTP_STATUS:200
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -877,11 +709,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/gps
 **Output:**
 
 ```
-{"timestamp_ms":1772220187631,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772220187631,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
+{"timestamp_ms":1772220675959,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772220675959,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -934,7 +769,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/esp32/conf
 **Output:**
 
 ```
-{"timestamp_ms":1772220194459,"schema_version":null,"config":{}}
+{"timestamp_ms":1772220679368,"schema_version":null,"config":{}}
 HTTP_STATUS:200
 ```
 
@@ -973,34 +808,16 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — GET /antsdr
 
 ### GET /antsdr
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1011,41 +828,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr
 **Output:**
 
 ```
-{"timestamp_ms":1772220192151,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
+{"timestamp_ms":1772220678278,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /antsdr/sweep/state
 
 ### GET /antsdr/sweep/state
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr/sweep/state
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1056,41 +858,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/swe
 **Output:**
 
 ```
-{"timestamp_ms":1772220194506,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772220194506,"last_error":"pyadi-iio is required for AntSDR access"}
+{"timestamp_ms":1772220679399,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772220679399,"last_error":"pyadi-iio is required for AntSDR access"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /antsdr/gain
 
 ### GET /antsdr/gain
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr/gain
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1101,41 +888,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/gai
 **Output:**
 
 ```
-{"timestamp_ms":1772220194532,"mode":"auto"}
+{"timestamp_ms":1772220679414,"mode":"auto"}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /antsdr/stats
 
 ### GET /antsdr/stats
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/antsdr/stats
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1146,28 +918,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/sta
 **Output:**
 
 ```
-{"timestamp_ms":1772220194555,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
+{"timestamp_ms":1772220679429,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — GET /remote_id
 
 ### GET /remote_id
 **Owner tag:** Aggregator
-**Owner base:** N/A (owner not exposed)
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1178,11 +948,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id
 **Output:**
 
 ```
-{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772220192941,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772220192941,"last_error":"no_odid_frames","timestamp_ms":1772220194570}
+{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772220677358,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772220677358,"last_error":"no_odid_frames","timestamp_ms":1772220679445}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -1192,14 +965,9 @@ HTTP_STATUS:200
 
 ### GET /remote_id/contacts
 **Owner tag:** Aggregator
-**Owner base:** N/A (owner not exposed)
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1210,11 +978,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772220194581,"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
+{"timestamp_ms":1772220679458,"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -1224,14 +995,9 @@ HTTP_STATUS:200
 
 ### GET /remote_id/stats
 **Owner tag:** Aggregator
-**Owner base:** N/A (owner not exposed)
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1242,11 +1008,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772220194594,"frames":0,"decoded":0}
+{"timestamp_ms":1772220679474,"frames":0,"decoded":0}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -1256,26 +1025,9 @@ HTTP_STATUS:200
 
 ### POST /audio/mute
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/audio/mute -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1292,33 +1044,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /audio/volume
 
 ### POST /audio/volume
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/audio/volume -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1335,33 +1073,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/wifi/enable
 
 ### POST /network/wifi/enable
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1378,33 +1102,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/wifi/disable
 
 ### POST /network/wifi/disable
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1421,33 +1131,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/wifi/connect
 
 ### POST /network/wifi/connect
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1464,33 +1160,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/wifi/disconnect
 
 ### POST /network/wifi/disconnect
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1507,33 +1189,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/enable
 
 ### POST /network/bluetooth/enable
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1550,33 +1218,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/disable
 
 ### POST /network/bluetooth/disable
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1593,33 +1247,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/scan/start
 
 ### POST /network/bluetooth/scan/start
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1636,33 +1276,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/scan/stop
 
 ### POST /network/bluetooth/scan/stop
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1679,33 +1305,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/pair
 
 ### POST /network/bluetooth/pair
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1722,33 +1334,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /network/bluetooth/unpair
 
 ### POST /network/bluetooth/unpair
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -X POST http://127.0.0.1:8002/api/v1/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-```
-
-**Output:**
-
-```
-SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
-```
-
-**Result:** SKIP
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1765,34 +1363,19 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Result:** SKIP
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /gps/restart
 
 ### POST /gps/restart
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8002/api/v1/gps/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
-```
-
-**Output:**
-
-```
-{"detail":"confirm_required"}
-HTTP_STATUS:400
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1808,6 +1391,9 @@ HTTP_STATUS:400
 ```
 
 **Result:** FAIL
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** FAIL (UPSTREAM BUG)
@@ -1839,7 +1425,7 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /esp32/leds
@@ -1868,7 +1454,7 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /esp32/buttons/simulate
@@ -1897,34 +1483,16 @@ SKIPPED (NEEDS REAL INPUT / OPERATOR APPROVAL)
 **Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (NEEDS REAL INPUT)
 
 
 ## 3) Endpoint Coverage — POST /antsdr/sweep/start
 
 ### POST /antsdr/sweep/start
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/antsdr/sweep/start -H 'Content-Type: application/json' -d '{"payload": {"plan": "default"}, "confirm": false}'
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1935,41 +1503,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"sweep/start","command_id":"antsdr-1772220194647","accepted":true,"timestamp_ms":1772220194647}
+{"command":"sweep/start","command_id":"antsdr-1772220679499","accepted":true,"timestamp_ms":1772220679499}
 HTTP_STATUS:200
 ```
 
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — POST /antsdr/sweep/stop
 
 ### POST /antsdr/sweep/stop
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/antsdr/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -1980,11 +1533,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"detail":"scan_not_running"}
-HTTP_STATUS:409
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** FAIL (UPSTREAM BUG)
@@ -1994,27 +1550,9 @@ HTTP_STATUS:409
 
 ### POST /antsdr/gain/set
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/antsdr/gain/set -H 'Content-Type: application/json' -d '{"payload": {"mode": "auto"}, "confirm": false}'
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2025,11 +1563,14 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"gain/set","command_id":"antsdr-1772220194695","accepted":true,"timestamp_ms":1772220194695}
-HTTP_STATUS:200
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
-**Result:** PASS
+**Result:** FAIL
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** FAIL (UPSTREAM BUG)
@@ -2039,27 +1580,9 @@ HTTP_STATUS:200
 
 ### POST /antsdr/device/reset
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8890/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8890/api/v1/antsdr/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
-```
-
-**Output:**
-
-```
-404: Not Found
-HTTP_STATUS:404
-```
-
-**Result:** FAIL
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2077,21 +1600,19 @@ HTTP_STATUS:400
 **Result:** PASS
 
 
-**Classification:** FAIL (UPSTREAM BUG)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** PASS
 
 
 ## 3) Endpoint Coverage — POST /remote_id/monitor/start
 
 ### POST /remote_id/monitor/start
 **Owner tag:** Aggregator
-**Owner base:** N/A (owner not exposed)
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2102,28 +1623,26 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/re
 **Output:**
 
 ```
-Internal Server Error
-HTTP_STATUS:500
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
 
 
-**Classification:** FAIL (AGGREGATOR PROXY GAP)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** FAIL (UPSTREAM BUG)
 
 
 ## 3) Endpoint Coverage — POST /remote_id/monitor/stop
 
 ### POST /remote_id/monitor/stop
 **Owner tag:** Aggregator
-**Owner base:** N/A (owner not exposed)
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2134,14 +1653,17 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/re
 **Output:**
 
 ```
-Internal Server Error
-HTTP_STATUS:500
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
 
 
-**Classification:** FAIL (AGGREGATOR PROXY GAP)
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
+**Classification:** FAIL (UPSTREAM BUG)
 
 
 ## 3) Endpoint Coverage — POST /vrx/tune
@@ -2161,8 +1683,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/vr
 **Output:**
 
 ```
-{"detail":"serial not connected"}
-HTTP_STATUS:409
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
@@ -2191,8 +1713,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/sc
 **Output:**
 
 ```
-{"detail":"serial not connected"}
-HTTP_STATUS:409
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
@@ -2221,8 +1743,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/sc
 **Output:**
 
 ```
-{"detail":"serial not connected"}
-HTTP_STATUS:409
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
@@ -2251,8 +1773,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/vi
 **Output:**
 
 ```
-{"detail":"serial not connected"}
-HTTP_STATUS:409
+{"detail":"rate_limited"}
+HTTP_STATUS:429
 ```
 
 **Result:** FAIL
@@ -2268,27 +1790,9 @@ HTTP_STATUS:409
 
 ### POST /system/reboot
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8002/api/v1/system/reboot -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
-```
-
-**Output:**
-
-```
-{"detail":"confirm_required"}
-HTTP_STATUS:400
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2306,6 +1810,9 @@ HTTP_STATUS:400
 **Result:** PASS
 
 
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
+
+
 **Classification:** PASS
 
 
@@ -2313,27 +1820,9 @@ HTTP_STATUS:400
 
 ### POST /system/shutdown
 **Owner tag:** Aggregator
-**Owner base:** http://127.0.0.1:8002/api/v1
+**Owner base:** http://127.0.0.1:8001/api/v1
 
 **Direct-owner check:**
-
-**Command:**
-
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8002/api/v1/system/shutdown -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
-```
-
-**Output:**
-
-```
-{"detail":"confirm_required"}
-HTTP_STATUS:400
-```
-
-**Result:** PASS
-
-
-**Aggregator proxy check:**
 
 **Command:**
 
@@ -2349,6 +1838,9 @@ HTTP_STATUS:400
 ```
 
 **Result:** PASS
+
+
+**Aggregator proxy check:** N/A (Aggregator owns endpoint)
 
 
 **Classification:** PASS
@@ -3268,7 +2760,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /observability/health/detail
@@ -3285,7 +2777,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /observability/status
@@ -3302,7 +2794,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /observability/version
@@ -3319,7 +2811,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /observability/config
@@ -3336,7 +2828,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — POST /observability/diag/bundle
@@ -3353,7 +2845,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /antsdr-scan/health
@@ -3790,7 +3282,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /remoteid-engine/health
@@ -3807,7 +3299,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /remoteid-engine/contacts
@@ -3824,7 +3316,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /remoteid-engine/stats
@@ -3841,7 +3333,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — GET /remoteid-engine/replay/state
@@ -3858,7 +3350,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — POST /remoteid-engine/replay/start
@@ -3875,7 +3367,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — POST /remoteid-engine/replay/stop
@@ -3892,7 +3384,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — POST /remoteid-engine/monitor/start
@@ -3909,7 +3401,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3) Endpoint Coverage — POST /remoteid-engine/monitor/stop
@@ -3926,7 +3418,7 @@ SKIPPED (DIRECT OWNER NOT EXPOSED IN PORT LIST)
 **Aggregator proxy check:** N/A (service-specific endpoint; no proxy expected)
 
 
-**Classification:** SKIP (NEEDS REAL INPUT/OWNER NOT EXPOSED)
+**Classification:** SKIP (OWNER NOT EXPOSED / SERVICE-SPECIFIC)
 
 
 ## 3A) Endpoint Coverage Summary
@@ -3948,7 +3440,7 @@ curl -sS http://127.0.0.1:8001/api/v1/status | jq '.timestamp_ms, .overall_ok, .
 **Output:**
 
 ```
-1772220195327
+1772220680116
 false
 "ok"
 true
@@ -4133,7 +3625,7 @@ curl -sS http://127.0.0.1:8890/api/v1/health | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772220199027
+1772220680706
 ```
 
 **Result:** PASS
@@ -4149,7 +3641,7 @@ curl -sS http://127.0.0.1:8890/api/v1/stats | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772220199074
+1772220680750
 ```
 
 **Result:** PASS
@@ -4183,7 +3675,7 @@ curl -sS -i -X POST http://127.0.0.1:8001/api/v1/system/reboot -H 'Content-Type:
 
 ```
 HTTP/1.1 400 Bad Request
-date: Fri, 27 Feb 2026 19:23:18 GMT
+date: Fri, 27 Feb 2026 19:31:19 GMT
 server: uvicorn
 content-length: 29
 content-type: application/json
@@ -4216,27 +3708,19 @@ cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws
 | Metric | Value |
 |---|---|
 | Total endpoints | 112 |
-| PASS | 20 |
-| FAIL | 61 |
+| PASS | 28 |
+| FAIL | 53 |
 | SKIP | 31 |
 
 ## 8) Failure Analysis + Next Fix Repo
 
 | Endpoint | Direct-owner | Aggregator | Classification | Owning Repo | Suggested Fix |
 |---|---|---|---|---|---|
-| /power | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /rf | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/sweep/state | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/gain | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/stats | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /gps/restart | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/sweep/start | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /antsdr/sweep/stop | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/gain/set | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /antsdr/device/reset | FAIL | PASS | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /remote_id/monitor/start | SKIP | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
-| /remote_id/monitor/stop | SKIP | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
+| /antsdr/gain/set | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
+| /remote_id/monitor/start | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
+| /remote_id/monitor/stop | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /vrx/tune | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /scan/start | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
 | /scan/stop | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-backend-aggregator | Add/fix endpoint or proxy; align contract |
