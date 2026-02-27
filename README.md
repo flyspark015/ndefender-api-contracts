@@ -5,6 +5,9 @@ This repository is the canonical specification for all N-Defender REST + WebSock
 Canonical contract:
 - `docs/ALL_IN_ONE_API.md`
 
+Deep‑dive API guide:
+- `docs/api/README.md`
+
 ## Architecture Overview
 ```
                      Public Internet
@@ -12,7 +15,7 @@ Canonical contract:
                             |  https://n.flyspark.in/api/v1
                             v
                     +----------------------+
-                    | Backend Aggregator   |
+ UI / AI / Figma -->| Backend Aggregator   |
                     | FastAPI :8001        |
                     +----------------------+
                        |         |        |
@@ -21,60 +24,83 @@ Canonical contract:
          | System Ctrl |   | RFScan   |  | RemoteID Engine    |
          | FastAPI:8002|   | :8890    |  | (local /api/v1)    |
          +-------------+   +----------+  +--------------------+
+                       |
+                       +--------------------+
+                       | ESP32 Panel (serial)
+                       +--------------------+
 
 Legacy Flask on :8000 is removed/disabled (security hardening).
 ```
 
-## Topology and Ports
-- Aggregator API: `http://127.0.0.1:8001/api/v1`
-- System Controller API: `http://127.0.0.1:8002/api/v1`
-- RFScan API: `http://127.0.0.1:8890/api/v1`
-- Legacy Flask `:8000`: removed/disabled (do not use)
+## Port Map and Ownership
+- Aggregator (public API, primary): `http://127.0.0.1:8001/api/v1`
+- System Controller (system controls): `http://127.0.0.1:8002/api/v1`
+- RFScan (AntSDR scan): `http://127.0.0.1:8890/api/v1`
+- RemoteID Engine (service-local): `http://127.0.0.1:<port>/api/v1`
 
-## Contract Rules (Non‑Negotiable)
-- Time fields are milliseconds: `timestamp_ms`, `last_update_ms`.
-- GPS uses `latitude` and `longitude` only.
-- Frequency uses `freq_hz` only.
-- Signal uses `rssi_dbm` (dBm).
-- WS envelope is `{type,timestamp_ms,source,data}`.
-- FastAPI errors are `{"detail":"..."}`.
-- Commands use `{"payload":{...},"confirm":false}`.
-- Dangerous commands require confirm-gating (see TX section).
+## Naming & Units
+- All timestamps are epoch milliseconds: `timestamp_ms`, `last_update_ms`.
+- GPS uses `latitude`/`longitude`.
+- RemoteID contacts use `lat`/`lon` per Contact schema.
+- Frequencies use `freq_hz` (Hz).
+- Signal strength uses `rssi_dbm` (dBm).
 
-## Quick Start (Local)
-1. REST snapshot:
-```bash
-curl -sS http://127.0.0.1:8001/api/v1/status
-```
-2. WebSocket:
-```bash
-websocat ws://127.0.0.1:8001/api/v1/ws
-```
-3. Smoke checks:
-```bash
-scripts/smoke_local.sh
-```
+### Endpoint Ownership (Prefix Map)
+| Service | Canonical Prefix |
+|---------|------------------|
+| Aggregator | `/api/v1/*` (default) |
+| System Controller | `/api/v1/system-controller/*` |
+| RFScan (AntSDR Scan) | `/api/v1/antsdr-scan/*` |
+| RemoteID Engine | `/api/v1/remoteid-engine/*` |
+| Observability | `/api/v1/observability/*` |
 
-## Validation
-- Full contract validation:
-```bash
-scripts/validate.sh
-```
+## RX vs TX Flows
+**RX (status + events)**
+1) `GET /api/v1/status` → full snapshot.
+2) `WS /api/v1/ws` → `SYSTEM_UPDATE`, `CONTACT_*`, `TELEMETRY_UPDATE`, `REPLAY_STATE`, `HEARTBEAT`.
+3) On WS disconnect: re-fetch `/api/v1/status`, then reconnect.
+
+**TX (commands)**
+1) Send REST command with `{"payload":{...},"confirm":false}`.
+2) REST returns `CommandResult` with `command_id`.
+3) WS emits `COMMAND_ACK` with matching correlation key.
+
+## Confirm‑Gating Lifecycle (Dangerous Commands)
+Dangerous commands require two steps:
+1) First call with `confirm=false` **must return** HTTP 400: `{"detail":"confirm_required"}`.
+2) Second call with `confirm=true` executes the command.
+
+UI guidance: show a modal requiring explicit confirmation and send `confirm=true` only after user approval.
+The 400 must occur **before** any state change is triggered.
+
+Dangerous endpoints (confirm required):
+- `POST /api/v1/system/reboot`
+- `POST /api/v1/system/shutdown`
+- `POST /api/v1/system-controller/system/reboot`
+- `POST /api/v1/system-controller/system/shutdown`
+- `POST /api/v1/system-controller/services/{name}/restart`
+- `POST /api/v1/antsdr/device/reset`
+- `POST /api/v1/antsdr-scan/device/reset`
+- `POST /api/v1/antsdr-scan/device/calibrate`
+
+## Error Taxonomy (FastAPI)
+| HTTP | Reason | Example |
+|------|--------|---------|
+| 400 | confirm_required | `{"detail":"confirm_required"}` |
+| 422 | validation_error | `{"detail":"validation_error"}` |
+| 503 | service_unavailable | `{"detail":"service_unavailable"}` |
+| 504 | upstream_timeout | `{"detail":"upstream_timeout"}` |
+| 409 | busy/conflict | `{"detail":"invalid_state"}` |
 
 ## Routing Canonicalization
-- OpenAPI paths are **relative** to the server base in `docs/OPENAPI.yaml` (which includes `/api/v1`).
-- README lists **canonical full paths** that include `/api/v1/...`.
-- CI enforces that README canonical paths match OpenAPI canonical paths.
-- Legacy aliases such as `/status` and `/ws` are **backward‑compat only** if they exist on a given deployment.
+- OpenAPI paths are relative to server base `/api/v1` in `docs/OPENAPI.yaml`.
+- README lists canonical full paths `/api/v1/...`.
+- CI enforces canonical equivalence.
+- Legacy aliases (`/status`, `/ws`) are backward‑compat only if present.
 
 ## API Index (Strict, CI‑checked)
-The list below must exactly match OpenAPI paths. Do not edit without updating OpenAPI.
-
 <!-- API_INDEX_START -->
 - GET /api/v1/antsdr
-- GET /api/v1/antsdr/gain
-- GET /api/v1/antsdr/stats
-- GET /api/v1/antsdr/sweep/state
 - GET /api/v1/antsdr-scan/config
 - GET /api/v1/antsdr-scan/device
 - GET /api/v1/antsdr-scan/events/last
@@ -83,6 +109,9 @@ The list below must exactly match OpenAPI paths. Do not edit without updating Op
 - GET /api/v1/antsdr-scan/stats
 - GET /api/v1/antsdr-scan/sweep/state
 - GET /api/v1/antsdr-scan/version
+- GET /api/v1/antsdr/gain
+- GET /api/v1/antsdr/stats
+- GET /api/v1/antsdr/sweep/state
 - GET /api/v1/audio
 - GET /api/v1/contacts
 - GET /api/v1/esp32
@@ -127,16 +156,16 @@ The list below must exactly match OpenAPI paths. Do not edit without updating Op
 - GET /api/v1/system-controller/ws
 - GET /api/v1/video
 - GET /api/v1/ws
-- POST /api/v1/antsdr/device/reset
-- POST /api/v1/antsdr/gain/set
-- POST /api/v1/antsdr/sweep/start
-- POST /api/v1/antsdr/sweep/stop
 - POST /api/v1/antsdr-scan/config/reload
 - POST /api/v1/antsdr-scan/device/calibrate
 - POST /api/v1/antsdr-scan/device/reset
 - POST /api/v1/antsdr-scan/gain/set
 - POST /api/v1/antsdr-scan/sweep/start
 - POST /api/v1/antsdr-scan/sweep/stop
+- POST /api/v1/antsdr/device/reset
+- POST /api/v1/antsdr/gain/set
+- POST /api/v1/antsdr/sweep/start
+- POST /api/v1/antsdr/sweep/stop
 - POST /api/v1/audio/mute
 - POST /api/v1/audio/volume
 - POST /api/v1/esp32/buttons/simulate
@@ -185,114 +214,36 @@ The list below must exactly match OpenAPI paths. Do not edit without updating Op
 - POST /api/v1/vrx/tune
 <!-- API_INDEX_END -->
 
-## TX Commands (Confirm‑Gating + Rate Limits)
-All command endpoints accept:
-```json
-{"payload":{},"confirm":false}
-```
-All command endpoints return `CommandResult`:
-```json
-{"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-
-Confirm‑gating rules:
-- Dangerous commands require `confirm=true`.
-- First call with `confirm=false` must return HTTP 400:
-```json
-{"detail":"confirm_required"}
-```
-- Second call with `confirm=true` succeeds.
-
-Dangerous endpoints:
-- `POST /api/v1/system/reboot`
-- `POST /api/v1/system/shutdown`
-- `POST /api/v1/system-controller/system/reboot`
-- `POST /api/v1/system-controller/system/shutdown`
-- `POST /api/v1/system-controller/services/{name}/restart`
-- `POST /api/v1/antsdr/device/reset`
-- `POST /api/v1/antsdr-scan/device/reset`
-- `POST /api/v1/antsdr-scan/device/calibrate`
-
-Rate limits:
-- Commands: 10/min
-- Dangerous: 2/min
-
 ## WebSocket (RX Events)
 Envelope:
 ```json
 {"type":"EVENT_TYPE","timestamp_ms":1700000000000,"source":"aggregator","data":{}}
 ```
-Liveness requirement: >=3 messages within 10 seconds.
+Liveness: >=3 messages in 10s.
 
-### Event Types (Aggregator WS)
-SYSTEM_UPDATE:
-```json
-{"type":"SYSTEM_UPDATE","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000,"overall_ok":false}}
-```
-COMMAND_ACK:
-```json
-{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"aggregator","data":{"command":"scan/start","command_id":"uuid","ok":true,"detail":null}}
-```
-HEARTBEAT:
-```json
-{"type":"HEARTBEAT","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000}}
-```
-ESP32_TELEMETRY:
-```json
-{"type":"ESP32_TELEMETRY","timestamp_ms":1700000000000,"source":"esp32","data":{"type":"telemetry","timestamp_ms":1000,"sel":1,"vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":219}],"video":{"selected":1},"led":{"r":0,"y":1,"g":0},"sys":{"uptime_ms":1000,"heap":123456}}}
-```
-LOG_EVENT:
-```json
-{"type":"LOG_EVENT","timestamp_ms":1700000000000,"source":"esp32","data":{"type":"log_event","timestamp_ms":1000,"message":"boot"}}
-```
-CONTACT_NEW / CONTACT_UPDATE / CONTACT_LOST:
-```json
-{"type":"CONTACT_NEW","timestamp_ms":1700000000000,"source":"remoteid","data":{"id":"rid:ABC123","type":"REMOTE_ID","lat":37.42,"lon":-122.08,"last_seen_ts":1700000000000}}
-```
-RF_CONTACT_NEW / RF_CONTACT_UPDATE / RF_CONTACT_LOST:
-```json
-{"type":"RF_CONTACT_UPDATE","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:5658000000","freq_hz":5658000000,"rssi_dbm":-48,"last_seen_ts":1700000000000}}
-```
-TELEMETRY_UPDATE:
+Examples:
 ```json
 {"type":"TELEMETRY_UPDATE","timestamp_ms":1700000000000,"source":"aggregator","data":{"timestamp_ms":1700000000000,"system":{"status":"ok"}}}
 ```
-REPLAY_STATE:
+```json
+{"type":"CONTACT_NEW","timestamp_ms":1700000000000,"source":"remoteid","data":{"id":"rid:123","type":"REMOTE_ID","last_seen_ts":1700000000000,"lat":23.0,"lon":72.0}}
+```
+```json
+{"type":"CONTACT_UPDATE","timestamp_ms":1700000000000,"source":"remoteid","data":{"id":"rid:123","last_seen_ts":1700000000000}}
+```
+```json
+{"type":"CONTACT_LOST","timestamp_ms":1700000000000,"source":"remoteid","data":{"id":"rid:123","last_seen_ts":1700000000000}}
+```
 ```json
 {"type":"REPLAY_STATE","timestamp_ms":1700000000000,"source":"remoteid","data":{"active":false,"source":"none"}}
 ```
-
-### Event Types (System Controller WS)
-LOG_EVENT:
 ```json
-{"type":"LOG_EVENT","timestamp_ms":1700000000000,"source":"system","data":{"message":"HELLO"}}
-```
-SYSTEM_STATUS:
-```json
-{"type":"SYSTEM_STATUS","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"system":{"status":"ok"}}}
-```
-UPS_UPDATE:
-```json
-{"type":"UPS_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}}
-```
-SERVICE_UPDATE:
-```json
-{"type":"SERVICE_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"name":"gpsd","active_state":"active","sub_state":"running"}}
-```
-NETWORK_UPDATE:
-```json
-{"type":"NETWORK_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"}}}
-```
-AUDIO_UPDATE:
-```json
-{"type":"AUDIO_UPDATE","timestamp_ms":1700000000000,"source":"system","data":{"timestamp_ms":1700000000000,"muted":false,"volume_percent":100}}
-```
-COMMAND_ACK:
-```json
-{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"system","data":{"command":"services/restart","ok":true,"detail":null}}
+{"type":"COMMAND_ACK","timestamp_ms":1700000000000,"source":"aggregator","data":{"command":"scan/start","command_id":"uuid","ok":true,"detail":null}}
 ```
 
-### Minimal WebSocket Clients
+Reconnect rules: exponential backoff (1s, 2s, 5s, 10s), refresh `/api/v1/status` after reconnect.
+
+### WebSocket Clients
 JavaScript:
 ```js
 const ws = new WebSocket("ws://127.0.0.1:8001/api/v1/ws");
@@ -306,1735 +257,4218 @@ ws.connect("ws://127.0.0.1:8001/api/v1/ws")
 print(json.loads(ws.recv()))
 ```
 
-## API Reference (REST)
-All examples use:
-- Aggregator: `http://127.0.0.1:8001/api/v1`
-- System Controller: `http://127.0.0.1:8002/api/v1`
-- RFScan: `http://127.0.0.1:8890/api/v1`
+## Endpoint Reference (Per Endpoint)
+All examples use `BASE=http://127.0.0.1:8001/api/v1` unless noted.
 
-### Backend Aggregator (Read)
-GET /api/v1/health
-Purpose: health check.
+### Backend Aggregator API
+
+#### GET /api/v1/antsdr
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr
 ```
 
-GET /api/v1/status
-Purpose: full snapshot.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "connected": false,
+  "last_error": "antsdr_unreachable"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr/gain
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"overall_ok":false,"system":{"status":"degraded"},"power":{"status":"ok","soc_percent":98},"rf":{"status":"offline","last_error":"antsdr_unreachable"},"remote_id":{"state":"degraded","mode":"live","capture_active":true},"vrx":{"selected":1,"scan_state":"idle","sys":{"status":"CONNECTED"},"vrx":[{"id":1,"freq_hz":5740000000,"rssi_raw":632}]},"fpv":{"selected":1,"scan_state":"idle","freq_hz":5740000000,"rssi_raw":632},"video":{"selected":1,"status":"ok"},"services":[],"network":{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}},"gps":{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"last_update_ms":1700000000000,"source":"gpsd"},"esp32":{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000},"antsdr":{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"},"audio":{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100},"contacts":[],"replay":{"active":false,"source":"none"}}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr/gain
 ```
 
-GET /api/v1/contacts
-Purpose: unified contacts list.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "mode": "auto"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr/stats
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1700000000000,"severity":"unknown","vrx_id":1,"freq_hz":5740000000,"rssi_raw":632,"selected":1}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr/stats
 ```
 
-GET /api/v1/system
-Purpose: system stats summary.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "frames_processed": 10,
+  "events_emitted": 5
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr/sweep/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr/sweep/state
 ```
 
-GET /api/v1/power
-Purpose: UPS/power snapshot.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "running": false,
+  "plans": [
+    {
+      "name": "default",
+      "start_hz": 5700000000,
+      "end_hz": 5900000000,
+      "step_hz": 2000000
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/audio
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/audio
 ```
 
-GET /api/v1/rf
-Purpose: RF scan health snapshot.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "muted": false,
+  "volume_percent": 100
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/contacts
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"status":"offline","scan_active":false,"last_error":"antsdr_unreachable","last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/contacts
 ```
 
-GET /api/v1/video
-Purpose: video selection and health.
+Response:
+```json
+{
+  "contacts": [
+    {
+      "id": "fpv:1",
+      "type": "FPV",
+      "source": "esp32",
+      "last_seen_ts": 1700000000000,
+      "severity": "unknown",
+      "vrx_id": 1,
+      "freq_hz": 5740000000,
+      "rssi_raw": 632,
+      "selected": 1
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/esp32
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"selected":1,"status":"ok"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/esp32
 ```
 
-GET /api/v1/services
-Purpose: systemd summary.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "connected": true,
+  "last_seen_ms": 1700000000000,
+  "heartbeat": {
+    "ok": true,
+    "interval_ms": 1000,
+    "last_heartbeat_ms": 1700000000000
+  },
+  "capabilities": {
+    "leds": true,
+    "vrx": true,
+    "video_switch": true
+  }
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/esp32/config
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-[{"name":"ndefender-backend","active_state":"active","sub_state":"running","restart_count":0}]
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/esp32/config
 ```
 
-GET /api/v1/network
-Purpose: network summary.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "config": {
+    "vrx_default_id": 1
+  },
+  "schema_version": "1"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/gps
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/gps
 ```
 
-GET /api/v1/network/wifi/state
-Purpose: Wi‑Fi state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "fix": "NO_FIX",
+  "satellites": {
+    "in_view": 0,
+    "in_use": 0
+  },
+  "latitude": null,
+  "longitude": null,
+  "last_update_ms": 1700000000000,
+  "source": "gpsd"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/health
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/health
 ```
 
-GET /api/v1/network/wifi/scan
-Purpose: Wi‑Fi scan list.
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/network
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/network
 ```
 
-GET /api/v1/network/bluetooth/state
-Purpose: Bluetooth state.
+Response:
+```json
+{
+  "wifi": {
+    "timestamp_ms": 1700000000000,
+    "enabled": true,
+    "connected": true,
+    "ssid": "lab"
+  },
+  "bluetooth": {
+    "timestamp_ms": 1700000000000,
+    "enabled": false,
+    "scanning": false,
+    "paired_count": 0,
+    "connected_devices": []
+  }
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/network/bluetooth/devices
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/network/bluetooth/devices
 ```
 
-GET /api/v1/network/bluetooth/devices
-Purpose: Bluetooth device list.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "devices": [
+    {
+      "addr": "00:11:22:33:44:55",
+      "name": "sensor",
+      "paired": true,
+      "connected": false,
+      "rssi_dbm": -40
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/network/bluetooth/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/network/bluetooth/state
 ```
 
-GET /api/v1/audio
-Purpose: audio state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "enabled": false,
+  "scanning": false,
+  "paired_count": 0,
+  "connected_devices": [],
+  "last_update_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/network/wifi/scan
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/network/wifi/scan
 ```
 
-GET /api/v1/gps
-Purpose: GPS state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "networks": [
+    {
+      "ssid": "lab",
+      "bssid": "aa:bb:cc:dd:ee:ff",
+      "security": "wpa2",
+      "signal_dbm": -48,
+      "channel": 6,
+      "frequency_mhz": 2437,
+      "known": true
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/network/wifi/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"latitude":null,"longitude":null,"last_update_ms":1700000000000,"source":"gpsd"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/network/wifi/state
 ```
 
-GET /api/v1/esp32
-Purpose: ESP32 status.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "enabled": true,
+  "connected": true,
+  "ssid": "lab",
+  "ip": "192.168.1.35",
+  "last_update_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/power
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"connected":true,"last_seen_ms":1700000000000,"heartbeat":{"ok":true,"interval_ms":1000,"last_heartbeat_ms":1700000000000},"capabilities":{"leds":true,"vrx":true,"video_switch":true}}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/power
 ```
 
-GET /api/v1/esp32/config
-Purpose: ESP32 config.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "soc_percent": 98
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remote_id
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"config":{"vrx_default_id":1},"schema_version":"1"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/remote_id
 ```
 
-GET /api/v1/antsdr
-Purpose: AntSDR summary (aggregated).
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "state": "degraded",
+  "mode": "live",
+  "capture_active": true,
+  "last_error": "no_odid_frames"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remote_id/contacts
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"connected":false,"last_error":"antsdr_unreachable"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/remote_id/contacts
 ```
 
-GET /api/v1/antsdr/sweep/state
-Purpose: AntSDR sweep state (aggregated).
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "contacts": [
+    {
+      "id": "rid:123",
+      "type": "REMOTE_ID",
+      "source": "remoteid",
+      "last_seen_ts": 1700000000000,
+      "severity": "unknown",
+      "lat": 23.0,
+      "lon": 72.0
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remote_id/stats
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/remote_id/stats
 ```
 
-GET /api/v1/antsdr/gain
-Purpose: AntSDR gain state (aggregated).
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "frames": 10,
+  "decoded": 2,
+  "dropped": 0,
+  "dedupe_hits": 1
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/rf
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"mode":"auto"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/rf
 ```
 
-GET /api/v1/antsdr/stats
-Purpose: AntSDR stats (aggregated).
+Response:
+```json
+{
+  "status": "offline",
+  "scan_active": false,
+  "last_error": "antsdr_unreachable",
+  "last_event_type": "RF_SCAN_OFFLINE",
+  "last_timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/services
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/services
 ```
 
-GET /api/v1/remote_id
-Purpose: RemoteID summary (aggregated).
+Response:
+```json
+[
+  {
+    "name": "ndefender-backend",
+    "active_state": "active",
+    "sub_state": "running",
+    "restart_count": 0
+  }
+]
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/status
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/status
 ```
 
-GET /api/v1/remote_id/contacts
-Purpose: RemoteID contacts (aggregated).
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "overall_ok": false,
+  "system": {
+    "status": "degraded",
+    "uptime_s": 4671
+  },
+  "power": {
+    "status": "ok",
+    "soc_percent": 98
+  },
+  "rf": {
+    "status": "offline",
+    "scan_active": false,
+    "last_error": "antsdr_unreachable",
+    "last_timestamp_ms": 1700000000000
+  },
+  "remote_id": {
+    "state": "degraded",
+    "mode": "live",
+    "capture_active": true
+  },
+  "vrx": {
+    "selected": 1,
+    "scan_state": "idle",
+    "sys": {
+      "status": "CONNECTED"
+    },
+    "vrx": [
+      {
+        "id": 1,
+        "freq_hz": 5740000000,
+        "rssi_raw": 632
+      }
+    ]
+  },
+  "fpv": {
+    "selected": 1,
+    "scan_state": "idle",
+    "freq_hz": 5740000000,
+    "rssi_raw": 632
+  },
+  "video": {
+    "selected": 1,
+    "status": "ok"
+  },
+  "services": [],
+  "network": {
+    "wifi": {
+      "timestamp_ms": 1700000000000,
+      "enabled": true,
+      "connected": true,
+      "ssid": "lab",
+      "ip": "192.168.1.35"
+    },
+    "bluetooth": {
+      "timestamp_ms": 1700000000000,
+      "enabled": false,
+      "scanning": false,
+      "paired_count": 0,
+      "connected_devices": []
+    }
+  },
+  "gps": {
+    "timestamp_ms": 1700000000000,
+    "fix": "NO_FIX",
+    "satellites": {
+      "in_view": 0,
+      "in_use": 0
+    },
+    "latitude": null,
+    "longitude": null,
+    "last_update_ms": 1700000000000,
+    "source": "gpsd"
+  },
+  "esp32": {
+    "timestamp_ms": 1700000000000,
+    "connected": true,
+    "last_seen_ms": 1700000000000
+  },
+  "antsdr": {
+    "timestamp_ms": 1700000000000,
+    "connected": false,
+    "last_error": "antsdr_unreachable"
+  },
+  "audio": {
+    "timestamp_ms": 1700000000000,
+    "status": "ok",
+    "muted": false,
+    "volume_percent": 100
+  },
+  "contacts": [],
+  "replay": {
+    "active": false,
+    "source": "none"
+  }
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system
 ```
 
-GET /api/v1/remote_id/stats
-Purpose: RemoteID stats (aggregated).
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "uptime_s": 4671
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/video
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/video
 ```
 
-GET /api/v1/ws
-Purpose: WS upgrade endpoint.
+Response:
+```json
+{
+  "selected": 1,
+  "status": "ok"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/ws
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"detail":"upgrade_to_websocket"}
-```
-Errors:
-```json
-{"detail":"bad_request"}
+
+Curl:
+```bash
+curl -sS $BASE/ws
 ```
 
-### Backend Aggregator (Write)
-POST /api/v1/vrx/tune
-Purpose: tune VRX.
+Response:
+```json
+{
+  "detail": "upgrade_to_websocket"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### POST /api/v1/antsdr/device/reset
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{"vrx_id":1,"freq_hz":5740000000},"confirm":false}
-```
-Success:
-```json
-{"command":"vrx/tune","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-POST /api/v1/scan/start
-Purpose: start scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr/device/reset",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/antsdr/gain/set
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"rate_limited"}
+{
+  "payload": {
+    "mode": "auto"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/scan/stop
-Purpose: stop scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr/gain/set -H 'Content-Type: application/json' -d '{"payload": {"mode": "auto"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr/gain/set",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/antsdr/sweep/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"rate_limited"}
+{
+  "payload": {
+    "plan": "default"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/video/select
-Purpose: select video input.
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr/sweep/start -H 'Content-Type: application/json' -d '{"payload": {"plan": "default"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr/sweep/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/antsdr/sweep/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"sel":1},"confirm":false}
-```
-Success:
-```json
-{"command":"video/select","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/audio/mute
-Purpose: mute/unmute.
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr/sweep/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/audio/mute
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"muted":true},"confirm":false}
-```
-Success:
-```json
-{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "muted": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/audio/volume
-Purpose: set volume.
+Curl:
+```bash
+curl -sS -X POST $BASE/audio/mute -H 'Content-Type: application/json' -d '{"payload": {"muted": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "audio/mute",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/audio/volume
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"volume_percent":50},"confirm":false}
-```
-Success:
-```json
-{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "volume_percent": 50
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/wifi/enable
-Purpose: enable Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/audio/volume -H 'Content-Type: application/json' -d '{"payload": {"volume_percent": 50}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "audio/volume",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/esp32/buttons/simulate
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"enabled":true},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "button": "mute",
+    "action": "press"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/wifi/disable
-Purpose: disable Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/esp32/buttons/simulate -H 'Content-Type: application/json' -d '{"payload": {"button": "mute", "action": "press"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "esp32/buttons/simulate",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/esp32/buzzer
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "mode": "beep",
+    "duration_ms": 250
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/wifi/connect
-Purpose: connect Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/esp32/buzzer -H 'Content-Type: application/json' -d '{"payload": {"mode": "beep", "duration_ms": 250}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "esp32/buzzer",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/esp32/config
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"ssid":"lab","password":"secret"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "config": {
+      "vrx_default_id": 1
+    }
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/wifi/disconnect
-Purpose: disconnect Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/esp32/config -H 'Content-Type: application/json' -d '{"payload": {"config": {"vrx_default_id": 1}}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "esp32/config",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/esp32/leds
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "red": true,
+    "yellow": false,
+    "green": false
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/enable
-Purpose: enable Bluetooth.
+Curl:
+```bash
+curl -sS -X POST $BASE/esp32/leds -H 'Content-Type: application/json' -d '{"payload": {"red": true, "yellow": false, "green": false}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "esp32/leds",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/gps/restart
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"enabled":true},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/disable
-Purpose: disable Bluetooth.
+Curl:
+```bash
+curl -sS -X POST $BASE/gps/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "gps/restart",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/disable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/scan/start
-Purpose: start BT scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/disable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/enable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "enabled": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/scan/stop
-Purpose: stop BT scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/enable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/pair
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "addr": "00:11:22:33:44:55",
+    "pin": "0000"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/pair
-Purpose: pair device.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55", "pin": "0000"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/pair",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/scan/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/network/bluetooth/unpair
-Purpose: unpair device.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/scan/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/scan/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/gps/restart
-Purpose: restart GPS (confirm required).
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/scan/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/bluetooth/unpair
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {
+    "addr": "00:11:22:33:44:55"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/esp32/buzzer
-Purpose: buzzer control.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/bluetooth/unpair",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/wifi/connect
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"mode":"beep","duration_ms":250},"confirm":false}
-```
-Success:
-```json
-{"command":"esp32/buzzer","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "ssid": "lab",
+    "password": "secret"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/esp32/leds
-Purpose: LED control.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload": {"ssid": "lab", "password": "secret"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/wifi/connect",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/wifi/disable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"red":true,"yellow":false,"green":false},"confirm":false}
-```
-Success:
-```json
-{"command":"esp32/leds","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/esp32/buttons/simulate
-Purpose: simulate button (local-only).
+Curl:
+```bash
+curl -sS -X POST $BASE/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/wifi/disable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/wifi/disconnect
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"button":"mute","action":"press"},"confirm":false}
-```
-Success:
-```json
-{"command":"esp32/buttons/simulate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"local_only"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/esp32/config
-Purpose: write ESP32 config.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/wifi/disconnect",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/network/wifi/enable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"config":{"vrx_default_id":1}},"confirm":false}
-```
-Success:
-```json
-{"command":"esp32/config","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "enabled": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/antsdr/sweep/start
-Purpose: start AntSDR sweep.
+Curl:
+```bash
+curl -sS -X POST $BASE/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "network/wifi/enable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/remote_id/monitor/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"plan":"default"},"confirm":false}
-```
-Success:
-```json
-{"command":"antsdr/sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/antsdr/sweep/stop
-Purpose: stop AntSDR sweep.
+Curl:
+```bash
+curl -sS -X POST $BASE/remote_id/monitor/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remote_id/monitor/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/remote_id/monitor/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"antsdr/sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/antsdr/gain/set
-Purpose: set AntSDR gain.
+Curl:
+```bash
+curl -sS -X POST $BASE/remote_id/monitor/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remote_id/monitor/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/scan/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"mode":"auto"},"confirm":false}
-```
-Success:
-```json
-{"command":"antsdr/gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/antsdr/device/reset
-Purpose: reset AntSDR device (dangerous).
+Curl:
+```bash
+curl -sS -X POST $BASE/scan/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "scan/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/scan/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"antsdr/device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/remote_id/monitor/start
-Purpose: start RemoteID monitor.
+Curl:
+```bash
+curl -sS -X POST $BASE/scan/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "scan/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system/reboot
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"remote_id/monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-POST /api/v1/remote_id/monitor/stop
-Purpose: stop RemoteID monitor.
+Curl:
+```bash
+curl -sS -X POST $BASE/system/reboot -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "system/reboot",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/system/shutdown
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"remote_id/monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-POST /api/v1/system/reboot
-Purpose: reboot system (dangerous).
+Curl:
+```bash
+curl -sS -X POST $BASE/system/shutdown -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "system/shutdown",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/video/select
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {
+    "sel": 1
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system/shutdown
-Purpose: shutdown system (dangerous).
+Curl:
+```bash
+curl -sS -X POST $BASE/video/select -H 'Content-Type: application/json' -d '{"payload": {"sel": 1}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "video/select",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/vrx/tune
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {
+    "vrx_id": 1,
+    "freq_hz": 5740000000
+  },
+  "confirm": false
+}
 ```
 
-### System Controller (Read)
-GET /api/v1/system-controller/health
-Purpose: health check.
+Curl:
+```bash
+curl -sS -X POST $BASE/vrx/tune -H 'Content-Type: application/json' -d '{"payload": {"vrx_id": 1, "freq_hz": 5740000000}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "vrx/tune",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+
+
+### System Controller API
+
+#### GET /api/v1/system-controller/audio
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/audio
 ```
 
-GET /api/v1/system-controller/status
-Purpose: system-controller snapshot.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "muted": false,
+  "volume_percent": 100
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/gps
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"system":{"status":"ok"},"ups":{"status":"ok"},"services":[],"network":{},"audio":{}}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/gps
 ```
 
-GET /api/v1/system-controller/system
-Purpose: system stats.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "fix": "NO_FIX",
+  "satellites": {
+    "in_view": 0,
+    "in_use": 0
+  },
+  "latitude": null,
+  "longitude": null,
+  "last_update_ms": 1700000000000,
+  "source": "gpsd"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/health
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","uptime_s":4671}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/health
 ```
 
-GET /api/v1/system-controller/ups
-Purpose: UPS snapshot.
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/network
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","soc_percent":98}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/network
 ```
 
-GET /api/v1/system-controller/services
-Purpose: service list.
+Response:
+```json
+{
+  "wifi": {
+    "timestamp_ms": 1700000000000,
+    "enabled": true,
+    "connected": true,
+    "ssid": "lab"
+  },
+  "bluetooth": {
+    "timestamp_ms": 1700000000000,
+    "enabled": false,
+    "scanning": false,
+    "paired_count": 0,
+    "connected_devices": []
+  }
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/network/bluetooth/devices
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-[{"name":"gpsd","active_state":"active","sub_state":"running","restart_count":0}]
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/network/bluetooth/devices
 ```
 
-GET /api/v1/system-controller/network
-Purpose: network summary.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "devices": [
+    {
+      "addr": "00:11:22:33:44:55",
+      "name": "sensor",
+      "paired": true,
+      "connected": false,
+      "rssi_dbm": -40
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/network/bluetooth/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"wifi":{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab"},"bluetooth":{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[]}}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/network/bluetooth/state
 ```
 
-GET /api/v1/system-controller/network/wifi/state
-Purpose: Wi‑Fi state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "enabled": false,
+  "scanning": false,
+  "paired_count": 0,
+  "connected_devices": [],
+  "last_update_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/network/wifi/scan
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"enabled":true,"connected":true,"ssid":"lab","ip":"192.168.1.35","last_update_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/network/wifi/scan
 ```
 
-GET /api/v1/system-controller/network/wifi/scan
-Purpose: Wi‑Fi scan list.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "networks": [
+    {
+      "ssid": "lab",
+      "bssid": "aa:bb:cc:dd:ee:ff",
+      "security": "wpa2",
+      "signal_dbm": -48,
+      "channel": 6,
+      "frequency_mhz": 2437,
+      "known": true
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/network/wifi/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff","security":"wpa2","signal_dbm":-48,"channel":6,"frequency_mhz":2437,"known":true}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/network/wifi/state
 ```
 
-GET /api/v1/system-controller/network/bluetooth/state
-Purpose: Bluetooth state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "enabled": true,
+  "connected": true,
+  "ssid": "lab",
+  "ip": "192.168.1.35",
+  "last_update_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/services
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/services
 ```
 
-GET /api/v1/system-controller/network/bluetooth/devices
-Purpose: Bluetooth devices.
+Response:
+```json
+[
+  {
+    "name": "gpsd",
+    "active_state": "active",
+    "sub_state": "running",
+    "restart_count": 0
+  }
+]
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/status
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"devices":[{"addr":"00:11:22:33:44:55","name":"sensor","paired":true,"connected":false,"rssi_dbm":-40}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/status
 ```
 
-GET /api/v1/system-controller/gps
-Purpose: GPS state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "system": {
+    "status": "ok"
+  },
+  "ups": {
+    "status": "ok"
+  },
+  "services": [],
+  "network": {},
+  "audio": {}
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/system
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"latitude":null,"longitude":null,"last_update_ms":1700000000000,"source":"gpsd"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/system
 ```
 
-GET /api/v1/system-controller/audio
-Purpose: audio state.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "uptime_s": 4671
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/ups
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"status":"ok","muted":false,"volume_percent":100}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/ups
 ```
 
-GET /api/v1/system-controller/ws
-Purpose: WS upgrade for system controller.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "status": "ok",
+  "soc_percent": 98
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/system-controller/ws
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"detail":"upgrade_to_websocket"}
-```
-Errors:
-```json
-{"detail":"bad_request"}
+
+Curl:
+```bash
+curl -sS $BASE/system-controller/ws
 ```
 
-### System Controller (Write)
-POST /api/v1/system-controller/services/{name}/restart
-Purpose: restart service (dangerous).
+Response:
+```json
+{
+  "detail": "upgrade_to_websocket"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### POST /api/v1/system-controller/audio/mute
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"services/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {
+    "muted": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/wifi/enable
-Purpose: enable Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/audio/mute -H 'Content-Type: application/json' -d '{"payload": {"muted": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/audio/mute",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/audio/volume
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"enabled":true},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "volume_percent": 50
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/wifi/disable
-Purpose: disable Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/audio/volume -H 'Content-Type: application/json' -d '{"payload": {"volume_percent": 50}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/audio/volume",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/gps/restart
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/wifi/connect
-Purpose: connect Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/gps/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/gps/restart",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/disable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"ssid":"lab","password":"secret"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/connect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/wifi/disconnect
-Purpose: disconnect Wi‑Fi.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/disable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/enable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/wifi/disconnect","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "enabled": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/enable
-Purpose: enable Bluetooth.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/enable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/pair
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"enabled":true},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/enable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "addr": "00:11:22:33:44:55",
+    "pin": "0000"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/disable
-Purpose: disable Bluetooth.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55", "pin": "0000"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/pair",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/scan/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/disable","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/scan/start
-Purpose: start BT scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/scan/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/scan/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/scan/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/scan/stop
-Purpose: stop BT scan.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/scan/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/bluetooth/unpair
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/scan/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "addr": "00:11:22:33:44:55"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/pair
-Purpose: pair device.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/bluetooth/unpair",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/wifi/connect
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"addr":"00:11:22:33:44:55","pin":"0000"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/pair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "ssid": "lab",
+    "password": "secret"
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/network/bluetooth/unpair
-Purpose: unpair device.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload": {"ssid": "lab", "password": "secret"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/wifi/connect",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/wifi/disable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"addr":"00:11:22:33:44:55"},"confirm":false}
-```
-Success:
-```json
-{"command":"network/bluetooth/unpair","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/gps/restart
-Purpose: restart GPS (confirm required).
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/wifi/disable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/wifi/disconnect
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"gps/restart","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {},
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/audio/mute
-Purpose: mute/unmute.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/wifi/disconnect",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/network/wifi/enable
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
 Request:
 ```json
-{"payload":{"muted":true},"confirm":false}
-```
-Success:
-```json
-{"command":"audio/mute","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {
+    "enabled": true
+  },
+  "confirm": false
+}
 ```
 
-POST /api/v1/system-controller/audio/volume
-Purpose: set volume.
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/network/wifi/enable",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/system-controller/services/{name}/restart
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{"volume_percent":50},"confirm":false}
-```
-Success:
-```json
-{"command":"audio/volume","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-POST /api/v1/system-controller/system/reboot
-Purpose: reboot system (dangerous).
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/services/{name}/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/services/{name}/restart",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/system-controller/system/reboot
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"system/reboot","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-POST /api/v1/system-controller/system/shutdown
-Purpose: shutdown system (dangerous).
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/system/reboot -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "system-controller/system/reboot",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/system-controller/system/shutdown
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
 Request:
 ```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"system/shutdown","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
+{
+  "payload": {},
+  "confirm": true
+}
 ```
 
-### AntSDR Scan (Read)
-GET /api/v1/antsdr-scan/health
-Purpose: RFScan health.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+Curl:
+```bash
+curl -sS -X POST $BASE/system-controller/system/shutdown -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
 ```
 
-GET /api/v1/antsdr-scan/version
-Purpose: RFScan version.
-Request:
+Response:
 ```json
-{}
-```
-Success:
-```json
-{"version":"dev","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+{
+  "command": "system-controller/system/shutdown",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
 ```
 
-GET /api/v1/antsdr-scan/stats
-Purpose: RFScan stats.
-Request:
+Errors (example):
 ```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"frames_processed":10,"events_emitted":5}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+{
+  "detail": "confirm_required"
+}
 ```
 
-GET /api/v1/antsdr-scan/device
-Purpose: RF device status.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"connected":false,"last_error":"device_not_connected"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
 
-GET /api/v1/antsdr-scan/sweep/state
-Purpose: sweep state.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"running":false,"plans":[{"name":"default","start_hz":5700000000,"end_hz":5900000000,"step_hz":2000000}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
 
-GET /api/v1/antsdr-scan/gain
-Purpose: gain state.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"mode":"auto"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
+### RFScan (AntSDR Scan) API
 
-GET /api/v1/antsdr-scan/config
-Purpose: scan config.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"output_jsonl":"/opt/ndefender/logs/antsdr_scan.jsonl"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
+#### GET /api/v1/antsdr-scan/config
 
-GET /api/v1/antsdr-scan/events/last
-Purpose: last RF events.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"events":[{"type":"RF_CONTACT_NEW","timestamp_ms":1700000000000,"source":"antsdr","data":{"id":"rf:1","freq_hz":5740000000,"rssi_dbm":-48}}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
-### AntSDR Scan (Write)
-POST /api/v1/antsdr-scan/config/reload
-Purpose: reload config.
-Request:
-```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"config/reload","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
+Notes: timestamps are ms; response is contract-shaped.
 
-POST /api/v1/antsdr-scan/sweep/start
-Purpose: start sweep.
-Request:
-```json
-{"payload":{"plan":"default"},"confirm":false}
-```
-Success:
-```json
-{"command":"sweep/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/antsdr-scan/sweep/stop
-Purpose: stop sweep.
-Request:
-```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"sweep/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/antsdr-scan/gain/set
-Purpose: set gain.
-Request:
-```json
-{"payload":{"mode":"auto"},"confirm":false}
-```
-Success:
-```json
-{"command":"gain/set","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/antsdr-scan/device/reset
-Purpose: reset device (dangerous).
-Request:
-```json
-{"payload":{},"confirm":true}
-```
-Success:
-```json
-{"command":"device/reset","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
-```
-
-POST /api/v1/antsdr-scan/device/calibrate
-Purpose: calibrate device (dangerous).
-Request:
-```json
-{"payload":{"kind":"rf_dc"},"confirm":true}
-```
-Success:
-```json
-{"command":"device/calibrate","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"confirm_required"}
-```
-
-### RemoteID Engine (Read)
-GET /api/v1/remoteid-engine/health
-Purpose: RemoteID health.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/remoteid-engine/status
-Purpose: RemoteID status.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"state":"degraded","mode":"live","capture_active":true,"last_error":"no_odid_frames"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/remoteid-engine/contacts
-Purpose: RemoteID contacts.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"contacts":[{"id":"rid:123","type":"REMOTE_ID","source":"remoteid","last_seen_ts":1700000000000,"severity":"unknown","lat":23.0,"lon":72.0}]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/remoteid-engine/stats
-Purpose: RemoteID stats.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"frames":10,"decoded":2,"dropped":0,"dedupe_hits":1}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/remoteid-engine/replay/state
-Purpose: replay state.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"active":false,"source":"none"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-### RemoteID Engine (Write)
-POST /api/v1/remoteid-engine/monitor/start
-Purpose: start monitor.
-Request:
-```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"monitor/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/remoteid-engine/monitor/stop
-Purpose: stop monitor.
-Request:
-```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"monitor/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/remoteid-engine/replay/start
-Purpose: start replay.
-Request:
-```json
-{"payload":{"source":"file.jsonl"},"confirm":false}
-```
-Success:
-```json
-{"command":"replay/start","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-POST /api/v1/remoteid-engine/replay/stop
-Purpose: stop replay.
-Request:
-```json
-{"payload":{},"confirm":false}
-```
-Success:
-```json
-{"command":"replay/stop","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"invalid_state"}
-```
-
-### Observability (Read)
-GET /api/v1/observability/health
-Purpose: observability health.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"status":"ok","timestamp_ms":1700000000000}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/observability/health/detail
-Purpose: health details.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"checks":[]}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/observability/status
-Purpose: observability status.
-Request:
-```json
-{}
-```
-Success:
-```json
-{"timestamp_ms":1700000000000,"ok":true}
-```
-Errors:
-```json
-{"detail":"internal_error"}
-```
-
-GET /api/v1/observability/version
-Purpose: version.
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"version":"dev"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/config
 ```
 
-GET /api/v1/observability/config
-Purpose: config.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "output_jsonl": "/opt/ndefender/logs/antsdr_scan.jsonl"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/device
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
 {}
 ```
-Success:
-```json
-{"timestamp_ms":1700000000000,"profile":"default"}
-```
-Errors:
-```json
-{"detail":"internal_error"}
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/device
 ```
 
-### Observability (Write)
-POST /api/v1/observability/diag/bundle
-Purpose: create diagnostics bundle.
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "connected": false,
+  "last_error": "device_not_connected"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/events/last
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
 Request:
 ```json
-{"payload":{},"confirm":false}
+{}
 ```
-Success:
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/events/last
+```
+
+Response:
 ```json
-{"command":"diag/bundle","command_id":"uuid","accepted":true,"detail":null,"timestamp_ms":1700000000000}
+{
+  "timestamp_ms": 1700000000000,
+  "events": [
+    {
+      "type": "RF_CONTACT_NEW",
+      "timestamp_ms": 1700000000000,
+      "source": "antsdr",
+      "data": {
+        "id": "rf:1",
+        "freq_hz": 5740000000,
+        "rssi_dbm": -48
+      }
+    }
+  ]
+}
 ```
-Errors:
+
+Errors (example):
 ```json
-{"detail":"invalid_state"}
+{
+  "detail": "internal_error"
+}
 ```
 
-## Integration Guide for UI (Figma → UI)
-- Always render the `/status` snapshot first, then merge WS updates.
-- Display units exactly: `freq_hz`, `rssi_dbm`, `timestamp_ms`, `latitude`, `longitude`.
-- Show explicit offline/degraded reasons using `status` and `last_error`.
-- Use reconnect rules: on WS drop, re-fetch `/status`, then reconnect WS.
-- Stale indicators: compare `timestamp_ms` and subsystem `last_update_ms` to wall time.
-- Threat sorting rules: not implemented in contract; UI should preserve API order.
+#### GET /api/v1/antsdr-scan/gain
 
-## Integration Guide for AI Tools
-- Use `GET /status` as the primary state snapshot.
-- Use WS `/api/v1/ws` for live updates and correlation of command results.
-- Do not send dangerous commands unless explicitly allowed by the operator.
-- Respect confirm‑gating and rate limits; treat `{"detail":"confirm_required"}` as a hard stop without explicit confirmation.
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
-## Firmware Integration (ESP32 Panel)
-- ESP32 telemetry must align with the WS envelope when proxied.
-- ACK correlation must use `data.id == command_id` for ESP32 commands.
-- Firmware should include uptime telemetry for latency and health checks.
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/gain
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "mode": "auto"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/health
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/stats
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/stats
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "frames_processed": 10,
+  "events_emitted": 5
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/sweep/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/sweep/state
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "running": false,
+  "plans": [
+    {
+      "name": "default",
+      "start_hz": 5700000000,
+      "end_hz": 5900000000,
+      "step_hz": 2000000
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/antsdr-scan/version
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/antsdr-scan/version
+```
+
+Response:
+```json
+{
+  "version": "dev",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### POST /api/v1/antsdr-scan/config/reload
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/config/reload -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/config/reload",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/antsdr-scan/device/calibrate
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {
+    "kind": "rf_dc"
+  },
+  "confirm": true
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/device/calibrate -H 'Content-Type: application/json' -d '{"payload": {"kind": "rf_dc"}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/device/calibrate",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/antsdr-scan/device/reset
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm_required on confirm=false; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": true
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/device/reset -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/device/reset",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "confirm_required"
+}
+```
+
+#### POST /api/v1/antsdr-scan/gain/set
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {
+    "mode": "auto"
+  },
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/gain/set -H 'Content-Type: application/json' -d '{"payload": {"mode": "auto"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/gain/set",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/antsdr-scan/sweep/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {
+    "plan": "default"
+  },
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/sweep/start -H 'Content-Type: application/json' -d '{"payload": {"plan": "default"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/sweep/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/antsdr-scan/sweep/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/antsdr-scan/sweep/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "antsdr-scan/sweep/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+
+
+### RemoteID Engine API
+
+#### GET /api/v1/remoteid-engine/contacts
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/remoteid-engine/contacts
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "contacts": [
+    {
+      "id": "rid:123",
+      "type": "REMOTE_ID",
+      "source": "remoteid",
+      "last_seen_ts": 1700000000000,
+      "severity": "unknown",
+      "lat": 23.0,
+      "lon": 72.0
+    }
+  ]
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remoteid-engine/health
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/remoteid-engine/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remoteid-engine/replay/state
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/remoteid-engine/replay/state
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "active": false,
+  "source": "none"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remoteid-engine/stats
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/remoteid-engine/stats
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "frames": 10,
+  "decoded": 2,
+  "dropped": 0,
+  "dedupe_hits": 1
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/remoteid-engine/status
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/remoteid-engine/status
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "state": "degraded",
+  "mode": "live",
+  "capture_active": true,
+  "last_error": "no_odid_frames"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### POST /api/v1/remoteid-engine/monitor/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/remoteid-engine/monitor/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remoteid-engine/monitor/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/remoteid-engine/monitor/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/remoteid-engine/monitor/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remoteid-engine/monitor/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/remoteid-engine/replay/start
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {
+    "source": "file.jsonl"
+  },
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/remoteid-engine/replay/start -H 'Content-Type: application/json' -d '{"payload": {"source": "file.jsonl"}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remoteid-engine/replay/start",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+#### POST /api/v1/remoteid-engine/replay/stop
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/remoteid-engine/replay/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "remoteid-engine/replay/stop",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+
+
+### Observability API
+
+#### GET /api/v1/observability/config
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/observability/config
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "profile": "default"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/observability/health
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/observability/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/observability/health/detail
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/observability/health/detail
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "checks": []
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/observability/status
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/observability/status
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "ok": true
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### GET /api/v1/observability/version
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: timestamps are ms; response is contract-shaped.
+
+Request:
+```json
+{}
+```
+
+Curl:
+```bash
+curl -sS $BASE/observability/version
+```
+
+Response:
+```json
+{
+  "timestamp_ms": 1700000000000,
+  "version": "dev"
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "internal_error"
+}
+```
+
+#### POST /api/v1/observability/diag/bundle
+
+Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
+
+Notes: confirm=false allowed; rate limits apply.
+
+Request:
+```json
+{
+  "payload": {},
+  "confirm": false
+}
+```
+
+Curl:
+```bash
+curl -sS -X POST $BASE/observability/diag/bundle -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+```
+
+Response:
+```json
+{
+  "command": "observability/diag/bundle",
+  "command_id": "uuid",
+  "accepted": true,
+  "detail": null,
+  "timestamp_ms": 1700000000000
+}
+```
+
+Errors (example):
+```json
+{
+  "detail": "invalid_state"
+}
+```
+
+
 
 ## Data Model / Contracts
 - TypeScript: `packages/contracts-ts/` (alias to `types/`)
 - JSON Schema: `packages/contracts-schema/` (alias to `schemas/`)
 - OpenAPI: `packages/openapi/` (alias to `docs/OPENAPI.yaml`)
 
-## Legacy Paths
-- `/status` and `/ws` are legacy aliases. Canonical paths are `/api/v1/status` and `/api/v1/ws`.
+## Integration Guide for UI (Figma → UI)
+- Render `/api/v1/status` first, then merge WS updates.
+- Display units exactly: `freq_hz`, `rssi_dbm`, `timestamp_ms`, `latitude`, `longitude`.
+- Show explicit offline/degraded reasons using `status` and `last_error`.
+- Stale detection: compare `timestamp_ms` to wall time; show stale badge if > 5s.
+- Confirm‑gated actions must show a modal and re‑submit with `confirm=true`.
+- Threat sorting rules: not implemented in contract; preserve API order.
+
+## Integration Guide for AI Tools
+- Use `/api/v1/status` for state, WS for live updates.
+- Do not send dangerous commands without explicit operator confirmation.
+
+## Firmware Integration (ESP32)
+- ACK correlation uses `data.id == command_id`.
+- Telemetry should include uptime fields for health.
 
 ## Tooling
-- List endpoints from OpenAPI and README:
-```bash
-scripts/docs_endpoints.sh
-```
-
-## Security
-- Do not expose legacy Flask on `:8000`.
-- Do not commit tokens or credentialed URLs.
+- List endpoints: `scripts/docs_endpoints.sh`
+- Smoke tests: `scripts/smoke_local.sh`, `scripts/smoke_public.sh`, `scripts/smoke_ws.sh`
