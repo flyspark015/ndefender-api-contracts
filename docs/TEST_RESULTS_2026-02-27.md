@@ -1,6 +1,6 @@
 # N-Defender Test Results — 2026-02-27 (Revision 2)
 
-Generated: 2026-02-28 03:34:41 
+Generated: 2026-02-28 04:01:44 
 
 **IMPORTANT:** This repo contains contracts/docs/validation only; tests were run on the Raspberry Pi against deployed services (not a local setup guide).
 
@@ -61,7 +61,7 @@ TZ=Asia/Kolkata date
 **Output:**
 
 ```
-Sat Feb 28 03:34:41 IST 2026
+Sat Feb 28 04:01:44 IST 2026
 ```
 
 **Result:** PASS
@@ -78,7 +78,7 @@ ss -lntp | egrep '(:8000|:8001|:8002|:8890)\b' || true
 
 ```
 LISTEN 0      128                      127.0.0.1:8890       0.0.0.0:*    users:(("ndefender-antsd",pid=2071035,fd=6))
-LISTEN 0      2048                     127.0.0.1:8001       0.0.0.0:*    users:(("uvicorn",pid=2076223,fd=7))        
+LISTEN 0      2048                     127.0.0.1:8001       0.0.0.0:*    users:(("uvicorn",pid=2465529,fd=7))        
 LISTEN 0      2048                     127.0.0.1:8002       0.0.0.0:*    users:(("uvicorn",pid=2076239,fd=14))
 ```
 
@@ -135,7 +135,6 @@ git -C /home/toybook/ndefender-api-contracts status -sb
 ```
 ## chore/fix-actionable-failures-20260228...origin/chore/fix-actionable-failures-20260228
  M docs/TEST_RESULTS_2026-02-27.md
- M scripts/run_full_evidence.py
 ```
 
 **Result:** PASS
@@ -151,7 +150,7 @@ git -C /home/toybook/ndefender-api-contracts rev-parse --short HEAD
 **Output:**
 
 ```
-32f33aa
+fb73178
 ```
 
 **Result:** PASS
@@ -260,7 +259,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/health
 **Output:**
 
 ```
-{"ok":true,"timestamp_ms":1772229885572,"version":"1.0.0"}
+{"ok":true,"timestamp_ms":1772231505724,"version":"1.0.0"}
 HTTP_STATUS:200
 ```
 
@@ -275,7 +274,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/health
 **Output:**
 
 ```
-{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772229885584}
+{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772231505738}
 HTTP_STATUS:200
 ```
 
@@ -290,7 +289,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/stats
 **Output:**
 
 ```
-{"timestamp_ms": 1772229885597, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
+{"timestamp_ms": 1772231505750, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
 HTTP_STATUS:200
 ```
 
@@ -314,7 +313,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/health
 **Output:**
 
 ```
-{"status":"ok","timestamp_ms":1772229885857}
+{"status":"ok","timestamp_ms":1772231505970}
 HTTP_STATUS:200
 ```
 
@@ -344,7 +343,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/status
 **Output:**
 
 ```
-{"timestamp_ms":1772229886025,"overall_ok":false,"system":{"cpu_temp_c":38.6,"cpu_usage_percent":14.4,"load_1m":1.80859375,"load_5m":1.7724609375,"load_15m":1.6826171875,"ram_used_mb":2336,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":173232,"throttled_flags":0,"status":"ok","timestamp_ms":1772229884636,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":38.6,"load1":1.80859375,"load5":1.7724609375,"load15":1.6826171875,"usage_percent":14.4},"ram":{"total_mb":16215,"used_mb":2336,"free_mb":13878},"storage":{"root":{"total_gb":116.606,"used_gb":67.453,"free_gb":43.209},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1686420,"time_to_full_s":null,"status":"ok","timestamp_ms":1772229884638,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772229885469,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772229884664,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772229884664,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772229881490,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772229881490,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772229885469,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":1,"vrx":[{"id":1,"freq_hz":5803000000,"rssi_raw":1221},{"id":2,"freq_hz":5803000000,"rssi_raw":562},{"id":3,"freq_hz":5803000000,"rssi_raw":83}],"led":{"r":0,"y":0,"g":1},"sys":{"uptime_ms":80079364,"heap":337624,"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":1,"locked_channels":[],"rssi_raw":1221,"scan_state":"idle","freq_hz":5803000000},"video":{"selected":1,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772229884513,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772229884513,"last_error":null},"bluetooth":{"timestamp_ms":1772229884615,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772229884615,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772229884511,"last_error":"audio_unavailable"},"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}],"replay":{"active":false,"source":"none"}}
+{"timestamp_ms":1772231506164,"overall_ok":false,"system":{"cpu_temp_c":38.6,"cpu_usage_percent":25.8,"load_1m":1.78515625,"load_5m":1.55810546875,"load_15m":1.5537109375,"ram_used_mb":2312,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":174853,"throttled_flags":0,"status":"ok","timestamp_ms":1772231505578,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":38.6,"load1":1.78515625,"load5":1.55810546875,"load15":1.5537109375,"usage_percent":25.8},"ram":{"total_mb":16215,"used_mb":2312,"free_mb":13902},"storage":{"root":{"total_gb":116.606,"used_gb":67.528,"free_gb":43.134},"logs":null},"last_error":null},"power":{"pack_voltage_v":16.278,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1684380,"time_to_full_s":null,"status":"ok","timestamp_ms":1772231505583,"per_cell_v":[4.07,4.069,4.069,4.07],"last_error":null},"rf":{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772231505417,"scan_active":false,"status":"degraded","last_error":"no_rf_events"},"remote_id":{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772231502040,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772231502040,"last_error":"no_odid_frames"},"gps":{"timestamp_ms":1772231498440,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772231498440,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"},"esp32":{"timestamp_ms":1772231239798,"connected":false,"last_seen_ms":null,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"antsdr":{"timestamp_ms":1772231505417,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"},"vrx":{"selected":null,"vrx":[],"led":{},"sys":{"status":"DISCONNECTED","last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"},"scan_state":"idle"},"fpv":{"selected":null,"locked_channels":[],"rssi_raw":null,"scan_state":"idle","freq_hz":null},"video":{"selected":null,"status":"ok"},"services":[],"network":{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772231501467,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772231501467,"last_error":null},"bluetooth":{"timestamp_ms":1772231501550,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772231501550,"last_error":null}},"audio":{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772231501466,"last_error":"audio_unavailable"},"contacts":[],"replay":{"active":false,"source":"none"}}
 HTTP_STATUS:200
 ```
 
@@ -374,7 +373,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/contacts
 **Output:**
 
 ```
-{"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
+{"contacts":[]}
 HTTP_STATUS:200
 ```
 
@@ -404,7 +403,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/system
 **Output:**
 
 ```
-{"cpu_temp_c":38.6,"cpu_usage_percent":14.4,"load_1m":1.80859375,"load_5m":1.7724609375,"load_15m":1.6826171875,"ram_used_mb":2336,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":173232,"throttled_flags":0,"status":"ok","timestamp_ms":1772229884636,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":38.6,"load1":1.80859375,"load5":1.7724609375,"load15":1.6826171875,"usage_percent":14.4},"ram":{"total_mb":16215,"used_mb":2336,"free_mb":13878},"storage":{"root":{"total_gb":116.606,"used_gb":67.453,"free_gb":43.209},"logs":null},"last_error":null}
+{"cpu_temp_c":38.6,"cpu_usage_percent":25.8,"load_1m":1.78515625,"load_5m":1.55810546875,"load_15m":1.5537109375,"ram_used_mb":2312,"ram_total_mb":16215,"disk_used_gb":67,"disk_total_gb":116,"uptime_s":174853,"throttled_flags":0,"status":"ok","timestamp_ms":1772231505578,"version":{"app":"ndefender-system-controller","git_sha":null,"build_ts":null},"cpu":{"temp_c":38.6,"load1":1.78515625,"load5":1.55810546875,"load15":1.5537109375,"usage_percent":25.8},"ram":{"total_mb":16215,"used_mb":2312,"free_mb":13902},"storage":{"root":{"total_gb":116.606,"used_gb":67.528,"free_gb":43.134},"logs":null},"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -434,7 +433,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/power
 **Output:**
 
 ```
-{"pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1686420,"time_to_full_s":null,"status":"ok","timestamp_ms":1772229884638,"per_cell_v":[4.07,4.07,4.07,4.07],"last_error":null}
+{"pack_voltage_v":16.278,"current_a":-0.008,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"state":"IDLE","time_to_empty_s":1684380,"time_to_full_s":null,"status":"ok","timestamp_ms":1772231505583,"per_cell_v":[4.07,4.069,4.069,4.07],"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -464,7 +463,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/rf
 **Output:**
 
 ```
-{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772229885469,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
+{"last_event":{"reason":"no_rf_events"},"last_event_type":"RF_SCAN_OFFLINE","last_timestamp_ms":1772231505417,"scan_active":false,"status":"degraded","last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
@@ -494,7 +493,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/video
 **Output:**
 
 ```
-{"selected":1,"status":"ok"}
+{"selected":null,"status":"ok"}
 HTTP_STATUS:200
 ```
 
@@ -554,7 +553,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network
 **Output:**
 
 ```
-{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772229884513,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772229884513,"last_error":null},"bluetooth":{"timestamp_ms":1772229884615,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772229884615,"last_error":null}}
+{"connected":true,"ip_v4":"127.0.1.1","ip_v6":null,"ssid":"Airtel_Toybook","wifi":{"timestamp_ms":1772231501467,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772231501467,"last_error":null},"bluetooth":{"timestamp_ms":1772231501550,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772231501550,"last_error":null}}
 HTTP_STATUS:200
 ```
 
@@ -584,7 +583,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/audio
 **Output:**
 
 ```
-{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772229884511,"last_error":"audio_unavailable"}
+{"muted":null,"volume_percent":null,"status":"degraded","timestamp_ms":1772231501466,"last_error":"audio_unavailable"}
 HTTP_STATUS:200
 ```
 
@@ -614,7 +613,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772229887902,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772229887902,"last_error":null}
+{"timestamp_ms":1772231509604,"enabled":true,"connected":true,"ssid":"Airtel_Toybook","bssid":"2E\\","ip":"127.0.1.1","rssi_dbm":null,"link_quality":null,"last_update_ms":1772231509604,"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -644,7 +643,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/wi
 **Output:**
 
 ```
-{"timestamp_ms":1772229888189,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
+{"timestamp_ms":1772231509908,"networks":[{"ssid":"Airtel_Toybook","bssid":"2E\\","security":"C1\\"}],"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -674,7 +673,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772229888492,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772229888492,"last_error":null}
+{"timestamp_ms":1772231510188,"enabled":false,"scanning":false,"paired_count":0,"connected_devices":[],"last_update_ms":1772231510188,"last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -704,7 +703,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/network/bl
 **Output:**
 
 ```
-{"timestamp_ms":1772229888697,"devices":[]}
+{"timestamp_ms":1772231510469,"devices":[]}
 HTTP_STATUS:200
 ```
 
@@ -734,7 +733,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/gps
 **Output:**
 
 ```
-{"timestamp_ms":1772229881490,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772229881490,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
+{"timestamp_ms":1772231506445,"fix":"NO_FIX","satellites":{"in_view":0,"in_use":0},"hdop":null,"vdop":null,"pdop":null,"latitude":null,"longitude":null,"altitude_m":null,"speed_m_s":null,"heading_deg":null,"last_update_ms":1772231506445,"age_ms":null,"source":"gpsd","last_error":"gpsd_no_data"}
 HTTP_STATUS:200
 ```
 
@@ -764,7 +763,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/esp32
 **Output:**
 
 ```
-{"timestamp_ms":1772219285950,"connected":false,"last_seen_ms":1772219282836,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"}
+{"timestamp_ms":1772231239798,"connected":false,"last_seen_ms":null,"rtt_ms":null,"fw_version":null,"heartbeat":null,"capabilities":null,"last_error":"[Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'"}
 HTTP_STATUS:200
 ```
 
@@ -794,7 +793,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/esp32/conf
 **Output:**
 
 ```
-{"timestamp_ms":1772229889312,"schema_version":null,"config":{}}
+{"timestamp_ms":1772231511110,"schema_version":null,"config":{}}
 HTTP_STATUS:200
 ```
 
@@ -854,7 +853,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr
 **Output:**
 
 ```
-{"timestamp_ms":1772229885469,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
+{"timestamp_ms":1772231510434,"connected":false,"uri":"ip:192.168.10.2","temperature_c":null,"last_error":"no_rf_events"}
 HTTP_STATUS:200
 ```
 
@@ -884,7 +883,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/swe
 **Output:**
 
 ```
-{"timestamp_ms":1772229889775,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772229889775,"last_error":"pyadi-iio is required for AntSDR access"}
+{"timestamp_ms":1772231511563,"running":false,"active_plan":"5G8_RaceBand","plans":[{"name":"5G8_RaceBand","start_hz":5658000000.0,"end_hz":5917000000.0,"step_hz":2000000.0},{"name":"5G8_FatShark","start_hz":5733000000.0,"end_hz":5866000000.0,"step_hz":2000000.0},{"name":"5G8_BandA","start_hz":5865000000.0,"end_hz":5945000000.0,"step_hz":2000000.0},{"name":"5G8_Digital","start_hz":5725000000.0,"end_hz":5850000000.0,"step_hz":2000000.0},{"name":"2G4_Control","start_hz":2400000000.0,"end_hz":2483500000.0,"step_hz":1000000.0},{"name":"915_Control","start_hz":902000000.0,"end_hz":928000000.0,"step_hz":1000000.0}],"last_update_ms":1772231511563,"last_error":"pyadi-iio is required for AntSDR access"}
 HTTP_STATUS:200
 ```
 
@@ -914,7 +913,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/gai
 **Output:**
 
 ```
-{"timestamp_ms":1772229889978,"mode":"auto"}
+{"timestamp_ms":1772231511786,"mode":"auto"}
 HTTP_STATUS:200
 ```
 
@@ -944,7 +943,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/antsdr/sta
 **Output:**
 
 ```
-{"timestamp_ms":1772229890237,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
+{"timestamp_ms":1772231512007,"frames_processed":0,"events_emitted":0,"last_event_timestamp_ms":0}
 HTTP_STATUS:200
 ```
 
@@ -974,7 +973,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id
 **Output:**
 
 ```
-{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772229889700,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772229889700,"last_error":"no_odid_frames","timestamp_ms":1772229890445}
+{"last_event":{"reason":"no_odid_frames"},"last_event_type":"REMOTEID_STALE","last_timestamp_ms":1772231512133,"state":"DEGRADED","mode":"live","capture_active":true,"contacts_active":0,"last_update_ms":1772231512133,"last_error":"no_odid_frames","timestamp_ms":1772231512176}
 HTTP_STATUS:200
 ```
 
@@ -1004,7 +1003,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772229890650,"contacts":[{"id":"fpv:1","type":"FPV","source":"esp32","last_seen_ts":1772219282836,"severity":"unknown","vrx_id":1,"freq_hz":5803000000,"rssi_raw":1221,"selected":1,"last_seen_uptime_ms":80079364}]}
+{"timestamp_ms":1772231512390,"contacts":[]}
 HTTP_STATUS:200
 ```
 
@@ -1034,7 +1033,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8001/api/v1/remote_id/
 **Output:**
 
 ```
-{"timestamp_ms":1772229890908,"frames":0,"decoded":0}
+{"timestamp_ms":1772231512636,"frames":0,"decoded":0}
 HTTP_STATUS:200
 ```
 
@@ -1544,7 +1543,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"sweep/start","command_id":"antsdr-1772229891354","accepted":true,"timestamp_ms":1772229891354}
+{"command":"sweep/start","command_id":"antsdr-1772231513075","accepted":true,"timestamp_ms":1772231513075}
 HTTP_STATUS:200
 ```
 
@@ -1604,7 +1603,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/an
 **Output:**
 
 ```
-{"command":"gain/set","command_id":"antsdr-1772229891802","accepted":true,"timestamp_ms":1772229891802}
+{"command":"gain/set","command_id":"antsdr-1772231513452","accepted":true,"timestamp_ms":1772231513452}
 HTTP_STATUS:200
 ```
 
@@ -1664,8 +1663,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/re
 **Output:**
 
 ```
-Internal Server Error
-HTTP_STATUS:500
+{"detail":"remoteid_service_unreachable"}
+HTTP_STATUS:502
 ```
 
 **Result:** FAIL (SERVER_ERROR)
@@ -1694,8 +1693,8 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' -X POST http://127.0.0.1:8001/api/v1/re
 **Output:**
 
 ```
-Internal Server Error
-HTTP_STATUS:500
+{"detail":"remoteid_service_unreachable"}
+HTTP_STATUS:502
 ```
 
 **Result:** FAIL (SERVER_ERROR)
@@ -1921,7 +1920,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8002/api/v1/ups
 **Output:**
 
 ```
-{"timestamp_ms":1772229892641,"status":"ok","pack_voltage_v":16.279,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"time_to_empty_s":1897200,"time_to_full_s":null,"per_cell_v":[4.07,4.071,4.069,4.07],"state":"IDLE","last_error":null}
+{"timestamp_ms":1772231517603,"status":"ok","pack_voltage_v":16.278,"current_a":-0.009,"input_vbus_v":0.0,"input_power_w":0.0,"soc_percent":88,"time_to_empty_s":1684380,"time_to_full_s":null,"per_cell_v":[4.07,4.069,4.07,4.069],"state":"IDLE","last_error":null}
 HTTP_STATUS:200
 ```
 
@@ -2158,7 +2157,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/stats
 **Output:**
 
 ```
-{"timestamp_ms": 1772229895162, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
+{"timestamp_ms": 1772231518903, "frames_processed": 0, "events_emitted": 0, "last_event_timestamp_ms": 0}
 HTTP_STATUS:200
 ```
 
@@ -2203,7 +2202,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/device
 **Output:**
 
 ```
-{"timestamp_ms": 1772229895618, "connected": false, "uri": "ip:192.168.10.2", "temperature_c": null, "last_error": "pyadi-iio is required for AntSDR access"}
+{"timestamp_ms": 1772231519266, "connected": false, "uri": "ip:192.168.10.2", "temperature_c": null, "last_error": "pyadi-iio is required for AntSDR access"}
 HTTP_STATUS:200
 ```
 
@@ -2248,7 +2247,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/sweep/stat
 **Output:**
 
 ```
-{"timestamp_ms": 1772229896036, "running": false, "active_plan": "5G8_RaceBand", "plans": [{"name": "5G8_RaceBand", "start_hz": 5658000000.0, "end_hz": 5917000000.0, "step_hz": 2000000.0}, {"name": "5G8_FatShark", "start_hz": 5733000000.0, "end_hz": 5866000000.0, "step_hz": 2000000.0}, {"name": "5G8_BandA", "start_hz": 5865000000.0, "end_hz": 5945000000.0, "step_hz": 2000000.0}, {"name": "5G8_Digital", "start_hz": 5725000000.0, "end_hz": 5850000000.0, "step_hz": 2000000.0}, {"name": "2G4_Control", "start_hz": 2400000000.0, "end_hz": 2483500000.0, "step_hz": 1000000.0}, {"name": "915_Control", "start_hz": 902000000.0, "end_hz": 928000000.0, "step_hz": 1000000.0}], "last_update_ms": 1772229896036, "last_error": "pyadi-iio is required for AntSDR access"}
+{"timestamp_ms": 1772231519688, "running": false, "active_plan": "5G8_RaceBand", "plans": [{"name": "5G8_RaceBand", "start_hz": 5658000000.0, "end_hz": 5917000000.0, "step_hz": 2000000.0}, {"name": "5G8_FatShark", "start_hz": 5733000000.0, "end_hz": 5866000000.0, "step_hz": 2000000.0}, {"name": "5G8_BandA", "start_hz": 5865000000.0, "end_hz": 5945000000.0, "step_hz": 2000000.0}, {"name": "5G8_Digital", "start_hz": 5725000000.0, "end_hz": 5850000000.0, "step_hz": 2000000.0}, {"name": "2G4_Control", "start_hz": 2400000000.0, "end_hz": 2483500000.0, "step_hz": 1000000.0}, {"name": "915_Control", "start_hz": 902000000.0, "end_hz": 928000000.0, "step_hz": 1000000.0}], "last_update_ms": 1772231519688, "last_error": "pyadi-iio is required for AntSDR access"}
 HTTP_STATUS:200
 ```
 
@@ -2293,7 +2292,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}' http://127.0.0.1:8890/api/v1/gain
 **Output:**
 
 ```
-{"timestamp_ms": 1772229896464, "mode": "auto"}
+{"timestamp_ms": 1772231520128, "mode": "auto"}
 HTTP_STATUS:200
 ```
 
@@ -2853,7 +2852,7 @@ curl -sS http://127.0.0.1:8001/api/v1/status | jq '.timestamp_ms, .overall_ok, .
 **Output:**
 
 ```
-1772229900290
+1772231523693
 false
 "ok"
 true
@@ -2964,10 +2963,10 @@ curl -sS http://127.0.0.1:8001/api/v1/contacts | jq '.contacts[0].id, .contacts[
 **Output:**
 
 ```
-"fpv:1"
-"FPV"
-"esp32"
-1772219282836
+null
+null
+null
+null
 ```
 
 **Result:** PASS
@@ -3038,7 +3037,7 @@ curl -sS http://127.0.0.1:8890/api/v1/health | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772229901090
+1772231526059
 ```
 
 **Result:** PASS
@@ -3054,7 +3053,7 @@ curl -sS http://127.0.0.1:8890/api/v1/stats | jq '.timestamp_ms'
 **Output:**
 
 ```
-1772229901132
+1772231526104
 ```
 
 **Result:** PASS
@@ -3088,7 +3087,7 @@ curl -sS -i -X POST http://127.0.0.1:8001/api/v1/system/reboot -H 'Content-Type:
 
 ```
 HTTP/1.1 400 Bad Request
-date: Fri, 27 Feb 2026 22:05:00 GMT
+date: Fri, 27 Feb 2026 22:32:05 GMT
 server: uvicorn
 content-length: 29
 content-type: application/json
@@ -3112,7 +3111,7 @@ cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws
 ```
 CONNECTING ws://127.0.0.1:8001/api/v1/ws
 CONNECTED
-{"type":"HELLO","timestamp_ms":1772229901287,"source":"aggregator","data":{"timestamp_ms":1772229901287}}
+{"type":"HELLO","timestamp_ms":1772231526261,"source":"aggregator","data":{"timestamp_ms":1772231526261}}
 ```
 \n**Result:** PASS\n\n**Command:**
 
@@ -3125,7 +3124,7 @@ cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws
 ```
 CONNECTING ws://127.0.0.1:8001/api/v1/ws
 CONNECTED
-{"type": "HELLO", "timestamp_ms": 1772229901375, "source": "aggregator", "data": {"timestamp_ms": 1772229901375}}
+{"type": "HELLO", "timestamp_ms": 1772231526353, "source": "aggregator", "data": {"timestamp_ms": 1772231526353}}
 ```
 \n**Result:** PASS\n
 
@@ -3186,80 +3185,3 @@ CONNECTED
 | /sweep/stop | FAIL | FAIL | FAIL (PRECONDITION) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
 | /gain/set | FAIL | FAIL | FAIL (UPSTREAM BUG) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
 | /events/last | PASS | FAIL | FAIL (AGGREGATOR PROXY GAP) | ndefender-antsdr-scan | Add/fix endpoint or proxy; align contract |
-
-## Fix Progress (2026-02-28)
-
-### P0-WS — Real WS proof (Node + Python)
-**Before (from prior report):**
-```
-ReferenceError: WebSocket is not defined
-(timeout 5s) python3 packages/examples/ws/ws_client_python.py
-EXIT_CODE:124
-```
-**After:**
-```
-WS_URL=ws://127.0.0.1:8001/api/v1/ws node packages/examples/ws/ws_client_node.js
-CONNECTING ws://127.0.0.1:8001/api/v1/ws
-CONNECTED
-{"type":"HELLO","timestamp_ms":1772228333182,"source":"aggregator","data":{"timestamp_ms":1772228333182}}
-
-WS_URL=ws://127.0.0.1:8001/api/v1/ws timeout 5s python3 packages/examples/ws/ws_client_python.py
-CONNECTING ws://127.0.0.1:8001/api/v1/ws
-CONNECTED
-{"type": "HELLO", "timestamp_ms": 1772228336594, "source": "aggregator", "data": {"timestamp_ms": 1772228336594}}
-EXIT_CODE:0
-```
-**Classification:** FAIL → PASS
-**Commit:** `6da2ef6`
-
-### P1-A — Contract paths (System Controller prefix removed)
-**Before:**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8002/api/v1/system-controller/health
-{"detail":"Not Found"}
-HTTP_STATUS:404
-```
-**After (contract path is /health):**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8002/api/v1/health
-{"ok":true,"timestamp_ms":1772228420163,"version":"1.0.0"}
-HTTP_STATUS:200
-```
-**Classification:** FAIL (CONTRACT PATH MISMATCH) → PASS
-**Commit:** `ace7b73`
-
-### P1-B — Contract paths (RFScan /antsdr-scan prefix removed)
-**Before:**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8890/api/v1/antsdr-scan/health
-404: Not Found
-HTTP_STATUS:404
-```
-**After (contract path is /health):**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' http://127.0.0.1:8890/api/v1/health
-{"status": "ok", "engine_running": false, "ws_backend_connected": false, "last_event_timestamp_ms": null, "timestamp_ms": 1772228785716}
-HTTP_STATUS:200
-```
-**Classification:** FAIL (CONTRACT PATH MISMATCH) → PASS
-**Commit:** `53dff42`
-
-### P2 — confirm_required classification (PASS_SAFE_ERROR)
-**Before:** /gps/restart reported as FAIL (UPSTREAM BUG)
-**After:** /gps/restart reported as PASS_SAFE_ERROR (CONFIRM_REQUIRED)
-**Sample response:**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/gps/restart -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-{"detail":"confirm_required"}
-HTTP_STATUS:400
-```
-**Commit:** `5b8bbdd`
-
-### P0-RID-1 — RemoteID monitor 500 (Pending External Repo)
-**Before (current runtime):**
-```
-curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/remote_id/monitor/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
-Internal Server Error
-HTTP_STATUS:500
-```
-**Status:** ❌ Pending External Repo (`ndefender-backend-aggregator`)
