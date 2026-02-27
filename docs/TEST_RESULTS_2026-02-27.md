@@ -3200,3 +3200,25 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/
 HTTP_STATUS:409
 ```
 **Commit:** `fadd6c1`
+
+### P0-RID-1 — RemoteID monitor 500 (Pending External Repo)
+**Before (current runtime):**
+```
+curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/remote_id/monitor/start -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
+Internal Server Error
+HTTP_STATUS:500
+
+curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/remote_id/monitor/stop -H 'Content-Type: application/json' -d '{"payload":{},"confirm":false}'
+Internal Server Error
+HTTP_STATUS:500
+```
+**Logs (aggregator):**
+```
+httpx.ConnectError: All connection attempts failed
+... in ndefender-backend-aggregator main.py remoteid_monitor_stop -> _proxy_post("/api/v1/monitor/stop", ...)
+```
+**Status:** ❌ Pending External Repo (`ndefender-backend-aggregator`)
+**Suggested Fix:**
+- In `src/ndefender_backend_aggregator/main.py`, wrap RemoteID proxy calls in try/except and return `HTTP 502` with JSON `{ "detail": "remoteid_service_unreachable" }` instead of 500.
+- Verify RemoteID base URL config points to live service and add a health check before proxy.
+
