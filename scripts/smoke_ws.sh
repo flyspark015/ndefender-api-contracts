@@ -4,16 +4,9 @@ set -euo pipefail
 WS_URL="${WS_URL:-ws://127.0.0.1:8001/api/v1/ws}"
 export WS_URL
 
-python3 - <<'PY' || {
-  if command -v websocat >/dev/null 2>&1; then
-    echo "Fallback to websocat" >&2
-    timeout 5s websocat -q "$WS_URL" >/dev/null 2>&1 && exit 0
-  fi
-  exit 1
-}
+if python3 - <<'PY'; then
 import json
 import os
-import sys
 try:
     import websocket
 except Exception as exc:
@@ -31,3 +24,12 @@ try:
 except Exception:
     raise SystemExit(1)
 PY
+  exit 0
+else
+  if command -v websocat >/dev/null 2>&1; then
+    echo "Fallback to websocat" >&2
+    timeout 5s websocat -q "$WS_URL" >/dev/null 2>&1 && exit 0
+  fi
+  echo "No ws client available" >&2
+  exit 1
+fi

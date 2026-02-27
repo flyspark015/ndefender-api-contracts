@@ -18,9 +18,9 @@ else
 fi
 
 status_json=$(curl -fsS "$BASE/status")
-python3 - <<'PY' <<<"$status_json" || pass=false
-import json,sys
-j=json.load(sys.stdin)
+STATUS_JSON="$status_json" python3 - <<'PY' || pass=false
+import json,os
+j=json.loads(os.environ["STATUS_JSON"])
 assert "timestamp_ms" in j, "timestamp_ms missing"
 assert isinstance(j["timestamp_ms"], int), "timestamp_ms must be int"
 print("status ok: timestamp_ms present")
