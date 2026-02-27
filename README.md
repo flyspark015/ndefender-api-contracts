@@ -49,7 +49,7 @@ Legacy Flask on :8000 is removed/disabled (security hardening).
 | Service | Canonical Prefix |
 |---------|------------------|
 | Aggregator | `/api/v1/*` (default) |
-| System Controller | `/api/v1/system-controller/*` |
+| System Controller | `/api/v1/*` |
 | RFScan (AntSDR Scan) | `/api/v1/antsdr-scan/*` |
 | RemoteID Engine | `/api/v1/remoteid-engine/*` |
 | Observability | `/api/v1/observability/*` |
@@ -76,9 +76,9 @@ The 400 must occur **before** any state change is triggered.
 Dangerous endpoints (confirm required):
 - `POST /api/v1/system/reboot`
 - `POST /api/v1/system/shutdown`
-- `POST /api/v1/system-controller/system/reboot`
-- `POST /api/v1/system-controller/system/shutdown`
-- `POST /api/v1/system-controller/services/{name}/restart`
+- `POST /api/v1/system/reboot`
+- `POST /api/v1/system/shutdown`
+- `POST /api/v1/services/{name}/restart`
 - `POST /api/v1/antsdr/device/reset`
 - `POST /api/v1/antsdr-scan/device/reset`
 - `POST /api/v1/antsdr-scan/device/calibrate`
@@ -141,19 +141,19 @@ Dangerous endpoints (confirm required):
 - GET /api/v1/services
 - GET /api/v1/status
 - GET /api/v1/system
-- GET /api/v1/system-controller/audio
-- GET /api/v1/system-controller/gps
-- GET /api/v1/system-controller/health
-- GET /api/v1/system-controller/network
-- GET /api/v1/system-controller/network/bluetooth/devices
-- GET /api/v1/system-controller/network/bluetooth/state
-- GET /api/v1/system-controller/network/wifi/scan
-- GET /api/v1/system-controller/network/wifi/state
-- GET /api/v1/system-controller/services
-- GET /api/v1/system-controller/status
-- GET /api/v1/system-controller/system
-- GET /api/v1/system-controller/ups
-- GET /api/v1/system-controller/ws
+- GET /api/v1/audio
+- GET /api/v1/gps
+- GET /api/v1/health
+- GET /api/v1/network
+- GET /api/v1/network/bluetooth/devices
+- GET /api/v1/network/bluetooth/state
+- GET /api/v1/network/wifi/scan
+- GET /api/v1/network/wifi/state
+- GET /api/v1/services
+- GET /api/v1/status
+- GET /api/v1/system
+- GET /api/v1/ups
+- GET /api/v1/ws
 - GET /api/v1/video
 - GET /api/v1/ws
 - POST /api/v1/antsdr-scan/config/reload
@@ -192,22 +192,22 @@ Dangerous endpoints (confirm required):
 - POST /api/v1/remoteid-engine/replay/stop
 - POST /api/v1/scan/start
 - POST /api/v1/scan/stop
-- POST /api/v1/system-controller/audio/mute
-- POST /api/v1/system-controller/audio/volume
-- POST /api/v1/system-controller/gps/restart
-- POST /api/v1/system-controller/network/bluetooth/disable
-- POST /api/v1/system-controller/network/bluetooth/enable
-- POST /api/v1/system-controller/network/bluetooth/pair
-- POST /api/v1/system-controller/network/bluetooth/scan/start
-- POST /api/v1/system-controller/network/bluetooth/scan/stop
-- POST /api/v1/system-controller/network/bluetooth/unpair
-- POST /api/v1/system-controller/network/wifi/connect
-- POST /api/v1/system-controller/network/wifi/disable
-- POST /api/v1/system-controller/network/wifi/disconnect
-- POST /api/v1/system-controller/network/wifi/enable
-- POST /api/v1/system-controller/services/{name}/restart
-- POST /api/v1/system-controller/system/reboot
-- POST /api/v1/system-controller/system/shutdown
+- POST /api/v1/audio/mute
+- POST /api/v1/audio/volume
+- POST /api/v1/gps/restart
+- POST /api/v1/network/bluetooth/disable
+- POST /api/v1/network/bluetooth/enable
+- POST /api/v1/network/bluetooth/pair
+- POST /api/v1/network/bluetooth/scan/start
+- POST /api/v1/network/bluetooth/scan/stop
+- POST /api/v1/network/bluetooth/unpair
+- POST /api/v1/network/wifi/connect
+- POST /api/v1/network/wifi/disable
+- POST /api/v1/network/wifi/disconnect
+- POST /api/v1/network/wifi/enable
+- POST /api/v1/services/{name}/restart
+- POST /api/v1/system/reboot
+- POST /api/v1/system/shutdown
 - POST /api/v1/system/reboot
 - POST /api/v1/system/shutdown
 - POST /api/v1/video/select
@@ -2352,7 +2352,7 @@ Errors (example):
 
 ### System Controller API
 
-#### GET /api/v1/system-controller/audio
+#### GET /api/v1/audio
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2365,7 +2365,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/audio
+curl -sS $BASE/audio
 ```
 
 Response:
@@ -2385,7 +2385,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/gps
+#### GET /api/v1/gps
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2398,7 +2398,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/gps
+curl -sS $BASE/gps
 ```
 
 Response:
@@ -2424,7 +2424,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/health
+#### GET /api/v1/health
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2437,7 +2437,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/health
+curl -sS $BASE/health
 ```
 
 Response:
@@ -2455,7 +2455,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/network
+#### GET /api/v1/network
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2468,7 +2468,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/network
+curl -sS $BASE/network
 ```
 
 Response:
@@ -2497,7 +2497,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/network/bluetooth/devices
+#### GET /api/v1/network/bluetooth/devices
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2510,7 +2510,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/network/bluetooth/devices
+curl -sS $BASE/network/bluetooth/devices
 ```
 
 Response:
@@ -2536,7 +2536,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/network/bluetooth/state
+#### GET /api/v1/network/bluetooth/state
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2549,7 +2549,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/network/bluetooth/state
+curl -sS $BASE/network/bluetooth/state
 ```
 
 Response:
@@ -2571,7 +2571,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/network/wifi/scan
+#### GET /api/v1/network/wifi/scan
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2584,7 +2584,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/network/wifi/scan
+curl -sS $BASE/network/wifi/scan
 ```
 
 Response:
@@ -2612,7 +2612,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/network/wifi/state
+#### GET /api/v1/network/wifi/state
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2625,7 +2625,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/network/wifi/state
+curl -sS $BASE/network/wifi/state
 ```
 
 Response:
@@ -2647,7 +2647,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/services
+#### GET /api/v1/services
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2660,7 +2660,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/services
+curl -sS $BASE/services
 ```
 
 Response:
@@ -2682,7 +2682,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/status
+#### GET /api/v1/status
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2695,7 +2695,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/status
+curl -sS $BASE/status
 ```
 
 Response:
@@ -2721,7 +2721,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/system
+#### GET /api/v1/system
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2734,7 +2734,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/system
+curl -sS $BASE/system
 ```
 
 Response:
@@ -2753,7 +2753,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/ups
+#### GET /api/v1/ups
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2766,7 +2766,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/ups
+curl -sS $BASE/ups
 ```
 
 Response:
@@ -2785,7 +2785,7 @@ Errors (example):
 }
 ```
 
-#### GET /api/v1/system-controller/ws
+#### GET /api/v1/ws
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2798,7 +2798,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS $BASE/system-controller/ws
+curl -sS $BASE/ws
 ```
 
 Response:
@@ -2815,7 +2815,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/audio/mute
+#### POST /api/v1/audio/mute
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2833,7 +2833,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/audio/mute -H 'Content-Type: application/json' -d '{"payload": {"muted": true}, "confirm": false}'
+curl -sS -X POST $BASE/audio/mute -H 'Content-Type: application/json' -d '{"payload": {"muted": true}, "confirm": false}'
 ```
 
 Response:
@@ -2854,7 +2854,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/audio/volume
+#### POST /api/v1/audio/volume
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2872,7 +2872,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/audio/volume -H 'Content-Type: application/json' -d '{"payload": {"volume_percent": 50}, "confirm": false}'
+curl -sS -X POST $BASE/audio/volume -H 'Content-Type: application/json' -d '{"payload": {"volume_percent": 50}, "confirm": false}'
 ```
 
 Response:
@@ -2893,7 +2893,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/gps/restart
+#### POST /api/v1/gps/restart
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2909,7 +2909,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/gps/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/gps/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -2930,7 +2930,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/disable
+#### POST /api/v1/network/bluetooth/disable
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2946,7 +2946,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -2967,7 +2967,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/enable
+#### POST /api/v1/network/bluetooth/enable
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -2985,7 +2985,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
 ```
 
 Response:
@@ -3006,7 +3006,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/pair
+#### POST /api/v1/network/bluetooth/pair
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3025,7 +3025,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55", "pin": "0000"}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/pair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55", "pin": "0000"}, "confirm": false}'
 ```
 
 Response:
@@ -3046,7 +3046,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/scan/start
+#### POST /api/v1/network/bluetooth/scan/start
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3062,7 +3062,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/scan/start -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -3083,7 +3083,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/scan/stop
+#### POST /api/v1/network/bluetooth/scan/stop
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3099,7 +3099,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/scan/stop -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -3120,7 +3120,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/bluetooth/unpair
+#### POST /api/v1/network/bluetooth/unpair
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3138,7 +3138,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55"}, "confirm": false}'
+curl -sS -X POST $BASE/network/bluetooth/unpair -H 'Content-Type: application/json' -d '{"payload": {"addr": "00:11:22:33:44:55"}, "confirm": false}'
 ```
 
 Response:
@@ -3159,7 +3159,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/wifi/connect
+#### POST /api/v1/network/wifi/connect
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3178,7 +3178,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload": {"ssid": "lab", "password": "secret"}, "confirm": false}'
+curl -sS -X POST $BASE/network/wifi/connect -H 'Content-Type: application/json' -d '{"payload": {"ssid": "lab", "password": "secret"}, "confirm": false}'
 ```
 
 Response:
@@ -3199,7 +3199,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/wifi/disable
+#### POST /api/v1/network/wifi/disable
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3215,7 +3215,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/network/wifi/disable -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -3236,7 +3236,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/wifi/disconnect
+#### POST /api/v1/network/wifi/disconnect
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3252,7 +3252,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
+curl -sS -X POST $BASE/network/wifi/disconnect -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": false}'
 ```
 
 Response:
@@ -3273,7 +3273,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/network/wifi/enable
+#### POST /api/v1/network/wifi/enable
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3291,7 +3291,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
+curl -sS -X POST $BASE/network/wifi/enable -H 'Content-Type: application/json' -d '{"payload": {"enabled": true}, "confirm": false}'
 ```
 
 Response:
@@ -3312,7 +3312,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/services/{name}/restart
+#### POST /api/v1/services/{name}/restart
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3328,7 +3328,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/services/{name}/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+curl -sS -X POST $BASE/services/{name}/restart -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
 ```
 
 Response:
@@ -3349,7 +3349,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/system/reboot
+#### POST /api/v1/system/reboot
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3365,7 +3365,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/system/reboot -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+curl -sS -X POST $BASE/system/reboot -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
 ```
 
 Response:
@@ -3386,7 +3386,7 @@ Errors (example):
 }
 ```
 
-#### POST /api/v1/system-controller/system/shutdown
+#### POST /api/v1/system/shutdown
 
 Purpose: See canonical contract in docs/ALL_IN_ONE_API.md.
 
@@ -3402,7 +3402,7 @@ Request:
 
 Curl:
 ```bash
-curl -sS -X POST $BASE/system-controller/system/shutdown -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
+curl -sS -X POST $BASE/system/shutdown -H 'Content-Type: application/json' -d '{"payload": {}, "confirm": true}'
 ```
 
 Response:
