@@ -3253,7 +3253,7 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/
 {"detail":"confirm_required"}
 HTTP_STATUS:400
 ```
-**Commit:** TBD
+**Commit:** `5b8bbdd`
 
 ### P0-RID-1 — RemoteID monitor 500 (Pending External Repo)
 **Before (current runtime):**
@@ -3263,4 +3263,3 @@ Internal Server Error
 HTTP_STATUS:500
 ```
 **Status:** ❌ Pending External Repo (`ndefender-backend-aggregator`)
-
