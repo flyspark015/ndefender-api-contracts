@@ -175,6 +175,12 @@ def default_payload_for(path: str) -> Dict:
         payload = {"payload": {}, "confirm": False}
     elif '/antsdr/gain/set' in path:
         payload = {"payload": {"mode": "auto"}, "confirm": False}
+    elif path.endswith('/sweep/start'):
+        payload = {"payload": {"plan": "default"}, "confirm": False}
+    elif path.endswith('/sweep/stop'):
+        payload = {"payload": {}, "confirm": False}
+    elif path.endswith('/gain/set'):
+        payload = {"payload": {"mode": "auto"}, "confirm": False}
     elif '/antsdr/device/reset' in path:
         payload = {"payload": {}, "confirm": False}
     elif '/antsdr/device/calibrate' in path:
@@ -247,7 +253,14 @@ def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tu
         return ('PASS_SAFE_ERROR', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
     if http_code == 409:
         body_l = (body or '').lower()
-        if 'serial' in body_l or 'not connected' in body_l or 'precondition' in body_l:
+        if (
+            'serial' in body_l
+            or 'not connected' in body_l
+            or 'precondition' in body_l
+            or 'scan_not_running' in body_l
+            or 'scan_already_running' in body_l
+            or 'already_running' in body_l
+        ):
             return 'PASS_PRECONDITION', 'PRECONDITION_OK'
         return 'FAIL', 'PRECONDITION'
     return ('PASS', 'OK') if http_code and http_code < 400 else ('FAIL', f'HTTP_{http_code}')
