@@ -7,7 +7,8 @@
     "ci:links": "python3 ci/check_markdown_links.py",
     "ci:schemas": "python3 ci/check_schemas.py",
     "ci:openapi": "python3 ci/check_openapi.py",
-    "ci": "npm run ci:links && npm run ci:schemas && npm run ci:openapi && npm run typecheck"
+    "ci:readme-openapi": "python3 ci/check_readme_openapi_sync.py",
+    "ci": "npm run ci:links && npm run ci:schemas && npm run ci:openapi && npm run ci:readme-openapi && npm run typecheck"
   },
   "devDependencies": {
     "typescript": "^5.4.5"
