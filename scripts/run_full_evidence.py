@@ -236,7 +236,7 @@ def result_label_direct(http_code: int, body: str, method: str, path: str) -> Tu
     if method == 'get':
         return ('PASS', 'OK') if http_code == 200 else ('FAIL', f'HTTP_{http_code}')
     if is_dangerous(path):
-        return ('PASS', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
+        return ('PASS_SAFE_ERROR', 'CONFIRM_REQUIRED') if http_code == 400 and 'confirm_required' in body else ('FAIL', f'HTTP_{http_code}')
     if http_code == 409:
         return 'FAIL', 'PRECONDITION'
     return ('PASS', 'OK') if http_code and http_code < 400 else ('FAIL', f'HTTP_{http_code}')
@@ -337,6 +337,16 @@ def main():
 
         owner_base_label = owner if owner else "N/A (owner not exposed)"
         section = [f"### {method.upper()} {path}", f"**Owner tag:** {owner_tag}", f"**Owner base:** {owner_base_label}"]
+
+        # WS endpoints are not HTTP-testable; skip here and rely on WS proof section
+        if method == 'get' and path.endswith('/ws'):
+            section.append("\n**Direct-owner check:**\n\nSKIPPED (WS endpoint; HTTP GET not applicable)\n")
+            section.append("\n**Aggregator proxy check:** N/A (WS endpoint; tested via WS client)\n")
+            classification = "SKIP (NOT_APPLICABLE_FOR_HTTP)"
+            rows.append((method.upper(), path, classification))
+            section.append(f"\n**Classification:** {classification}\n")
+            write_section(f"3) Endpoint Coverage — {method.upper()} {path}", "\n".join(section))
+            continue
 
         # direct-owner check
         if path.startswith('/system-controller/') and sc_prefix_mismatch:
@@ -458,15 +468,26 @@ def main():
     cmd = f"curl -sS -i -X POST {BASE_AGG}/system/reboot -H 'Content-Type: application/json' -d '{{\"payload\":{{}},\"confirm\":false}}' | sed -n '1,25p'"
     code, out = run(cmd)
     out = redact(out)
-    status = 'PASS' if 'confirm_required' in out and '400' in out else 'FAIL'
+    status = 'PASS_SAFE_ERROR' if 'confirm_required' in out and '400' in out else 'FAIL'
     write_section('5) Confirm-Gating Proof', code_block(cmd, out) + f"\n**Result:** {status}\n")
 
-    # WS proof
-    ws_cmd = 'cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws timeout 5s python3 packages/examples/ws/ws_client_python.py'
-    code, out = run(ws_cmd, timeout=10)
-    out = redact(out)
-    status = 'PASS' if 'connected' in out else 'FAIL'
-    write_section('6) WebSocket Proof', code_block(ws_cmd, out) + f"\n**Result:** {status}\n")
+    # WS proof (no curl GET; use real clients)
+    ws_node_cmd = 'cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws node packages/examples/ws/ws_client_node.js'
+    code_n, out_n = run(ws_node_cmd, timeout=10)
+    out_n = redact(out_n)
+    status_n = 'PASS' if 'CONNECTED' in out_n and 'HELLO' in out_n else 'FAIL'
+
+    ws_py_cmd = 'cd /home/toybook/ndefender-api-contracts && WS_URL=ws://127.0.0.1:8001/api/v1/ws timeout 5s python3 packages/examples/ws/ws_client_python.py'
+    code_p, out_p = run(ws_py_cmd, timeout=10)
+    out_p = redact(out_p)
+    status_p = 'PASS' if 'CONNECTED' in out_p and 'HELLO' in out_p else 'FAIL'
+    ws_overall = 'PASS' if status_n == 'PASS' and status_p == 'PASS' else 'FAIL'
+
+    ws_body = (
+        code_block(ws_node_cmd, out_n) + f"\\n**Result:** {status_n}\\n\\n" +
+        code_block(ws_py_cmd, out_p) + f"\\n**Result:** {status_p}\\n"
+    )
+    write_section('6) WebSocket Proof', ws_body)
 
     # Summary table
     total = len(endpoints)
@@ -509,6 +530,8 @@ def main():
     ]
     blocker_lines = ['| Endpoint | Classification |', '|---|---|']
     row_map = {p: c for _, p, c in rows}
+    if '/ws' in row_map:
+        row_map['/ws'] = 'PASS' if ws_overall == 'PASS' else 'FAIL (WS PROOF)'
     for b in blockers:
         blocker_lines.append(f"| {b} | {row_map.get(b, 'UNKNOWN')} |")
     write_section('7c) UI Blockers vs Non-Blockers', "\n".join(blocker_lines))

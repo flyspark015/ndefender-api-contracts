@@ -13,6 +13,7 @@
     "ci": "npm run ci:links && npm run ci:schemas && npm run ci:openapi && npm run ci:readme-openapi && npm run ci:readme-examples && npm run typecheck && npm run ci:validate"
   },
   "devDependencies": {
+    "ws": "^8.17.0",
     "typescript": "^5.4.5"
   }
 }
