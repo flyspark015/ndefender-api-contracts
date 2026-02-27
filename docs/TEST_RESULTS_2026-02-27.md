@@ -3199,4 +3199,4 @@ curl -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:8001/api/v1/
 {"detail":"serial not connected"}
 HTTP_STATUS:409
 ```
-
+**Commit:** `fadd6c1`
